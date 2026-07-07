@@ -1,5 +1,6 @@
-const Anime = require("../models/Anime");
+const mongoose = require("mongoose");
 const axios = require("axios");
+const { ObjectId } = require("mongodb");
 
 // 3rd Party API integration (jikan.moe)
 exports.searchFromJikan = async (req, res) => {
@@ -8,19 +9,18 @@ exports.searchFromJikan = async (req, res) => {
     const response = await axios.get(`https://api.jikan.moe/v4/anime?q=${q}`);
     res.status(200).json({ source: "Jikan API", data: response.data.data });
   } catch (error) {
-    res
-      .status(502)
-      .json({
-        message: "Failed to fetch data from Jikan API",
-        error: error.message,
-      });
+    res.status(502).json({
+      message: "Failed to fetch data from Jikan API",
+      error: error.message,
+    });
   }
 };
 
 // CRUD Master
 exports.getAllAnime = async (req, res) => {
   try {
-    const animeList = await Anime.find();
+    const db = mongoose.connection.db;
+    const animeList = await db.collection("animes").find().toArray();
     res.status(200).json(animeList);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -29,7 +29,10 @@ exports.getAllAnime = async (req, res) => {
 
 exports.getAnimeById = async (req, res) => {
   try {
-    const anime = await Anime.findById(req.params.id);
+    const db = mongoose.connection.db;
+    const anime = await db
+      .collection("animes")
+      .findOne({ _id: new ObjectId(req.params.id) });
     if (!anime) return res.status(404).json({ message: "Anime not found" });
     res.status(200).json(anime);
   } catch (error) {
@@ -40,15 +43,21 @@ exports.getAnimeById = async (req, res) => {
 exports.createAnime = async (req, res) => {
   try {
     const { title, synopsis, episodes, isPremium } = req.body;
-    const coverImage = req.file ? req.file.path : null; // Ambil path file dari Multer
+    const coverImage = req.file ? req.file.path : null;
 
-    const newAnime = await Anime.create({
+    const db = mongoose.connection.db;
+    const result = await db.collection("animes").insertOne({
       title,
       synopsis,
       episodes,
       isPremium,
       coverImage,
+      createdAt: new Date(),
     });
+
+    const newAnime = await db
+      .collection("animes")
+      .findOne({ _id: result.insertedId });
     res
       .status(201)
       .json({ message: "Anime created successfully", data: newAnime });
@@ -62,17 +71,20 @@ exports.updateAnime = async (req, res) => {
     const updateData = { ...req.body };
     if (req.file) updateData.coverImage = req.file.path;
 
-    const updatedAnime = await Anime.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true },
-    );
-    if (!updatedAnime)
-      return res.status(404).json({ message: "Anime not found" });
+    const db = mongoose.connection.db;
+    const result = await db
+      .collection("animes")
+      .findOneAndUpdate(
+        { _id: new ObjectId(req.params.id) },
+        { $set: updateData },
+        { returnDocument: "after" },
+      );
+
+    if (!result) return res.status(404).json({ message: "Anime not found" });
 
     res
       .status(200)
-      .json({ message: "Anime updated successfully", data: updatedAnime });
+      .json({ message: "Anime updated successfully", data: result });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -80,9 +92,14 @@ exports.updateAnime = async (req, res) => {
 
 exports.deleteAnime = async (req, res) => {
   try {
-    const deletedAnime = await Anime.findByIdAndDelete(req.params.id);
+    const db = mongoose.connection.db;
+    const deletedAnime = await db
+      .collection("animes")
+      .findOneAndDelete({ _id: new ObjectId(req.params.id) });
+
     if (!deletedAnime)
       return res.status(404).json({ message: "Anime not found" });
+
     res.status(200).json({ message: "Anime master deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

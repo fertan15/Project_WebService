@@ -1,12 +1,29 @@
 const multer = require("multer");
 const path = require("path");
 
+const fs = require("fs");
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/");
+    const dir = "uploads/";
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    const ext = path.extname(file.originalname);
+    if (req.body.title) {
+      // Sanitize the title to be safe for filenames
+      const sanitizedTitle = req.body.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "-") // Replace non-alphanumeric chars with hyphens
+        .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+        .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+      cb(null, `${sanitizedTitle}-${Date.now()}${ext}`);
+    } else {
+      cb(null, `${Date.now()}-${file.originalname}`);
+    }
   },
 });
 

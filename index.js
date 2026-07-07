@@ -22,7 +22,8 @@ app.use("/api/anime", animeRoutes);
 app.use("/api/transactions", transactionRoutes);
 
 // Konek ke MongoDB via Mongoose
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/animedb";
+const MONGO_URI =
+  "mongodb://bontrex_db_user:FB32HpAtG1BaX4tL@ac-q2f8wyg-shard-00-00.ohzcpfe.mongodb.net:27017,ac-q2f8wyg-shard-00-01.ohzcpfe.mongodb.net:27017,ac-q2f8wyg-shard-00-02.ohzcpfe.mongodb.net:27017/anime_subscription_db?ssl=true&replicaSet=atlas-z1t9kt-shard-0&authSource=admin";
 
 mongoose
   .connect(MONGO_URI)
