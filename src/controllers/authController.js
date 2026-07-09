@@ -20,12 +20,15 @@ const register = async (req, res) => {
       wallet: 0,
       subscription_status: "basic",
       premium_until: null,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     res
       .status(201)
-      .json({ message: "User registered successfully", userId: result.insertedId });
+      .json({
+        message: "User registered successfully",
+        userId: result.insertedId,
+      });
   } catch (error) {
     res
       .status(500)
@@ -37,7 +40,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const db = mongoose.connection.db;
-    
+
     const user = await db.collection("users").findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -60,5 +63,5 @@ const login = async (req, res) => {
 
 module.exports = {
   register,
-  login
+  login,
 };
