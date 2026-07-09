@@ -1,136 +1,237 @@
 # Anime Subscription API
 
-Anime Subscription API is a REST API project built with **Node.js**, **Express.js**, and **MongoDB**. The project simulates a simple backend system for an anime streaming/subscription platform where users can register, login, browse anime, buy premium subscription plans, watch premium anime if their subscription is active, review anime, and manage their personal watchlist.
+Anime Subscription API is a RESTful web service built with **Node.js**, **Express.js**, and **MongoDB**. The service acts as the backend for a simple anime streaming/subscription platform. It handles user registration and login, anime catalog management, premium subscription plans, payment transactions, premium anime access checking, anime reviews, and user watchlists.
 
-This project also includes several CRUD modules, role-based access control, JWT authentication, file upload for anime cover images, third-party API integration using Jikan API, and database seeding for testing.
+This README explains not only how to run the project, but also **what the web service is for**, **why every endpoint exists**, and **how the program flow works from request to response**.
 
 ---
 
 ## Table of Contents
 
-- [Project Purpose](#project-purpose)
-- [Main Features](#main-features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
-- [Installation and Setup](#installation-and-setup)
-- [Seeded Test Accounts](#seeded-test-accounts)
-- [Postman Collection Testing](#postman-collection-testing)
-- [Authentication and Authorization](#authentication-and-authorization)
-- [Database Collections](#database-collections)
-- [API Endpoint Documentation](#api-endpoint-documentation)
-  - [Root Endpoint](#root-endpoint)
-  - [Auth Endpoints](#auth-endpoints)
-  - [Anime Endpoints](#anime-endpoints)
-  - [Subscription Plan Endpoints](#subscription-plan-endpoints)
-  - [Transaction Endpoints](#transaction-endpoints)
-  - [User Endpoints](#user-endpoints)
-  - [Review Endpoints](#review-endpoints)
-  - [Watchlist Endpoints](#watchlist-endpoints)
-- [CRUD Explanation](#crud-explanation)
-- [Business Logic Explanation](#business-logic-explanation)
-- [Validation Rules](#validation-rules)
-- [File Upload Rules](#file-upload-rules)
-- [Example Testing Flow](#example-testing-flow)
-- [Important Fixes in This Version](#important-fixes-in-this-version)
-- [Possible Future Improvements](#possible-future-improvements)
+- [1. Web Service Overview](#1-web-service-overview)
+- [2. Main Idea of the Application](#2-main-idea-of-the-application)
+- [3. User Roles](#3-user-roles)
+- [4. Main Features](#4-main-features)
+- [5. Technology Stack](#5-technology-stack)
+- [6. Project Structure](#6-project-structure)
+- [7. Environment Variables](#7-environment-variables)
+- [8. Installation and Setup](#8-installation-and-setup)
+- [9. Seeded Test Accounts](#9-seeded-test-accounts)
+- [10. How the Program Works](#10-how-the-program-works)
+- [11. Database Collections and Relationships](#11-database-collections-and-relationships)
+- [12. Endpoint Summary](#12-endpoint-summary)
+- [13. Detailed Endpoint Explanation](#13-detailed-endpoint-explanation)
+- [14. CRUD Modules Explanation](#14-crud-modules-explanation)
+- [15. Business Logic Explanation](#15-business-logic-explanation)
+- [16. Middleware Flow](#16-middleware-flow)
+- [17. Validation Rules](#17-validation-rules)
+- [18. File Upload Rules](#18-file-upload-rules)
+- [19. Postman Collection Testing](#19-postman-collection-testing)
+- [20. Recommended Manual Testing Flow](#20-recommended-manual-testing-flow)
+- [21. Common Response Status Codes](#21-common-response-status-codes)
+- [22. Important Fixes in This Version](#22-important-fixes-in-this-version)
+- [23. Possible Future Improvements](#23-possible-future-improvements)
+- [24. Conclusion](#24-conclusion)
 
 ---
 
-## Project Purpose
+## 1. Web Service Overview
 
-The goal of this project is to create a backend API for an anime subscription platform. The platform has two types of users:
+This project is a **backend web service**. It does not include a frontend user interface. Instead, it provides API endpoints that can be consumed by tools or applications such as:
 
-1. **Regular users** who can register, login, browse anime, buy premium plans, create reviews, and manage their watchlist.
-2. **Admin users** who can manage anime data, subscription plans, users, and transactions.
+- Postman
+- Mobile applications
+- Web frontend applications
+- Admin dashboards
+- Other backend services
 
-The system demonstrates common backend concepts such as:
+The API uses JSON as the main request and response format. For anime cover upload, the API also supports `multipart/form-data`.
 
-- REST API routing
-- CRUD operations
-- JWT authentication
-- Role-based authorization
-- MongoDB database operations
-- Data validation using Joi
-- Password hashing using bcrypt
-- Image upload using multer
-- External API integration
-- Transaction and subscription logic
+### What problem does this service solve?
 
----
+The service simulates a backend for an anime platform where:
 
-## Main Features
+1. Users can create an account.
+2. Users can login and receive a JWT token.
+3. Users can browse anime.
+4. Users can buy premium subscription plans.
+5. Premium users can access premium anime.
+6. Users can write reviews for anime.
+7. Users can save anime to their watchlist.
+8. Admin users can manage anime, subscription plans, users, and transactions.
 
-### 1. Authentication
+### Main web service concept
 
-Users can register and login. Passwords are hashed before being stored in the database. After login, the API returns a JWT token that must be used for protected routes.
+The API is organized around these main resources:
 
-### 2. Role-Based Access Control
+| Resource        | Meaning in the Application                     |
+| --------------- | ---------------------------------------------- |
+| `auth`          | Handles register and login.                    |
+| `anime`         | Stores and manages anime catalog data.         |
+| `subscriptions` | Stores premium subscription packages.          |
+| `transactions`  | Stores user purchase/payment records.          |
+| `users`         | Stores registered user accounts.               |
+| `reviews`       | Stores user rating and comment data for anime. |
+| `watchlist`     | Stores anime saved by each user.               |
 
-There are two roles:
-
-- `user`
-- `admin`
-
-Normal users can access user-level features. Admin users can manage master data such as anime, subscription plans, users, and transaction records.
-
-### 3. Anime CRUD
-
-Admins can create, read, update, and delete anime. Anime data can include title, synopsis, episode count, anime type, premium status, and cover image.
-
-### 4. Subscription Plan CRUD
-
-Admins can create, read, update, and delete subscription plans. Plans define the name, price, duration, and description of premium access.
-
-### 5. Transaction System
-
-Users can buy subscription plans. If the payment method is `Wallet`, the payment is processed immediately and the user's premium access is activated. If the payment method is another method, the transaction becomes `Pending` until an admin updates it to `Success`.
-
-### 6. Premium Watch Access
-
-Anime can be marked as premium. If an anime is premium, only users with an active premium subscription can watch it.
-
-### 7. Review CRUD
-
-Users can create, read, update, and delete reviews for anime. Each user can only review the same anime once. Users can update or delete their own reviews, while admins can also modify review data.
-
-### 8. Watchlist CRUD
-
-Users can add anime to their personal watchlist and update their watching status. The available statuses are:
-
-- `plan_to_watch`
-- `watching`
-- `completed`
-- `dropped`
-
-### 9. Jikan API Integration
-
-The project includes an endpoint to search anime from the public Jikan API. This is used as a third-party API integration feature.
-
-### 10. Seeder
-
-The project includes a database seeder that creates sample users, anime, subscription plans, invoices, reviews, and watchlist data.
+Each resource is accessed using HTTP endpoints such as `GET`, `POST`, `PUT`, and `DELETE`.
 
 ---
 
-## Tech Stack
+## 2. Main Idea of the Application
 
-| Technology   | Purpose                                 |
-| ------------ | --------------------------------------- |
-| Node.js      | JavaScript runtime                      |
-| Express.js   | Backend web framework                   |
-| MongoDB      | NoSQL database                          |
-| Mongoose     | MongoDB connection and session handling |
-| bcrypt       | Password hashing                        |
-| jsonwebtoken | JWT token creation and verification     |
-| Joi          | Request body validation                 |
-| multer       | Image/file upload                       |
-| axios        | Calling the external Jikan API          |
-| dotenv       | Loading environment variables           |
+The project is designed as a simplified anime subscription platform.
+
+### Example real-world scenario
+
+A user named Wawa opens an anime streaming app. Wawa can register and login. After login, Wawa can browse anime. Some anime are free, while some anime are marked as premium.
+
+If Wawa wants to watch a premium anime, Wawa must buy a premium subscription plan first. The platform provides plans such as:
+
+- 7-day premium access
+- 30-day premium access
+- 90-day premium access
+- 1-year premium access
+
+After buying a plan, Wawa's account becomes premium until a certain date. As long as the premium date has not expired, Wawa can watch premium anime.
+
+Wawa can also:
+
+- Add anime to a watchlist
+- Set watchlist status such as `watching` or `completed`
+- Give anime a rating and review comment
+- View transaction history
+
+Admin users are responsible for maintaining the platform data. Admins can:
+
+- Add new anime
+- Edit anime information
+- Delete anime
+- Create subscription plans
+- Update transaction statuses
+- Manage users
 
 ---
 
-## Project Structure
+## 3. User Roles
+
+The API has two roles: `user` and `admin`.
+
+### `user`
+
+A normal user can:
+
+- Register and login
+- View anime
+- Search anime from Jikan API
+- View subscription plans
+- Purchase subscription plans
+- View their own transaction history
+- Watch anime if allowed
+- Create, update, and delete their own reviews
+- Create, update, and delete their own watchlist items
+
+### `admin`
+
+An admin can do everything a user can do, plus admin-only management features:
+
+- Create anime
+- Update anime
+- Delete anime
+- Create subscription plans
+- Update subscription plans
+- Delete subscription plans
+- View all users
+- Update users
+- Delete users
+- View all transactions
+- Update transaction status
+- Delete transaction records
+
+### Why role separation is important
+
+Role separation protects sensitive features. For example, a normal user should not be able to delete anime from the platform or change another user's wallet balance. That is why admin endpoints require both:
+
+1. A valid JWT token
+2. The `admin` role inside the token
+
+---
+
+## 4. Main Features
+
+### 4.1 Authentication
+
+Users can register and login. Passwords are hashed using `bcrypt` before being stored. Login returns a JWT token that must be sent in the `Authorization` header for protected endpoints.
+
+### 4.2 Authorization
+
+Admin-only routes are protected using role-based middleware. If a normal user tries to access an admin route, the API returns `403 Forbidden`.
+
+### 4.3 Anime Catalog
+
+Anime data is stored in the `animes` collection. Each anime can have:
+
+- Title
+- Synopsis
+- Episode count
+- Type
+- Premium status
+- Cover image
+
+### 4.4 Premium Subscription Plans
+
+Subscription plans are stored in the `subscriptionplans` collection. Each plan defines:
+
+- Plan name
+- Price
+- Duration in days
+- Description
+
+### 4.5 Transactions
+
+Transactions are stored in the `invoices` collection. A transaction records which user bought which plan, the payment method, total amount, status, and premium end date after success.
+
+### 4.6 Premium Access Check
+
+When a user tries to watch anime, the system checks whether the anime requires premium access. If the anime is premium, the system checks the user's `subscription_status` and `premium_until` date.
+
+### 4.7 Review CRUD
+
+Users can rate anime from 1 to 5 and write a comment. One user can only create one review per anime.
+
+### 4.8 Watchlist CRUD
+
+Users can save anime to their own watchlist and track watching progress using statuses such as `plan_to_watch`, `watching`, `completed`, and `dropped`.
+
+### 4.9 Jikan API Integration
+
+The project includes a third-party API endpoint that searches anime from Jikan API. This shows how the backend can call an external service using `axios`.
+
+### 4.10 Seeder
+
+The seeder creates test users, anime, subscription plans, transactions, reviews, and watchlist data so the project can be tested quickly.
+
+---
+
+## 5. Technology Stack
+
+| Technology   | Purpose                                              |
+| ------------ | ---------------------------------------------------- |
+| Node.js      | Runs JavaScript on the server.                       |
+| Express.js   | Creates the HTTP API routes and middleware.          |
+| MongoDB      | Stores application data.                             |
+| Mongoose     | Handles MongoDB connection and transaction sessions. |
+| bcrypt       | Hashes user passwords.                               |
+| jsonwebtoken | Creates and verifies JWT tokens.                     |
+| Joi          | Validates request bodies.                            |
+| multer       | Handles anime cover image uploads.                   |
+| axios        | Calls the external Jikan API.                        |
+| dotenv       | Loads environment variables from `.env`.             |
+| Postman      | Tests all API endpoints using `wawa.json`.           |
+
+---
+
+## 6. Project Structure
 
 ```txt
 anime-subscription-api/
@@ -179,23 +280,25 @@ anime-subscription-api/
         └── objectId.js
 ```
 
-### Folder Explanation
+### File and folder explanation
 
-| Folder/File             | Explanation                                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `index.js`              | Main application entry point. It loads environment variables, connects to MongoDB, registers middleware, and starts the server. |
-| `src/routes`            | Contains route definitions for each module.                                                                                     |
-| `src/controllers`       | Contains the business logic for each endpoint.                                                                                  |
-| `src/Schema`            | Contains Joi validation schemas for request bodies.                                                                             |
-| `src/middlewares`       | Contains authentication, authorization, upload, and validation middleware.                                                      |
-| `src/config/db.js`      | Contains database seeding logic.                                                                                                |
-| `src/utils/objectId.js` | Helper for validating and converting MongoDB ObjectId values.                                                                   |
-| `uploads`               | Stores uploaded anime cover images.                                                                                             |
-| `wawa.json`             | Postman collection for testing all API endpoints.                                                                               |
+| File/Folder                   | Explanation                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `index.js`                    | Main entry point. Loads `.env`, starts Express, connects to MongoDB, registers routes, and starts the server. |
+| `src/routes`                  | Defines endpoint URLs and attaches middleware/controllers to each endpoint.                                   |
+| `src/controllers`             | Contains the main logic for each request. Controllers read data, write data, and return responses.            |
+| `src/Schema`                  | Contains Joi schemas for validating incoming request bodies.                                                  |
+| `src/middlewares/auth.js`     | Contains JWT authentication and role authorization middleware.                                                |
+| `src/middlewares/validate.js` | Validates request body using Joi before the controller runs.                                                  |
+| `src/middlewares/upload.js`   | Handles anime image upload using multer.                                                                      |
+| `src/config/db.js`            | Seeder file. Inserts sample data into MongoDB.                                                                |
+| `src/utils/objectId.js`       | Converts and validates MongoDB ObjectId values safely.                                                        |
+| `uploads/`                    | Stores uploaded anime cover image files.                                                                      |
+| `wawa.json`                   | Postman collection for testing the endpoints.                                                                 |
 
 ---
 
-## Environment Variables
+## 7. Environment Variables
 
 Create a `.env` file in the project root. You can copy the example file:
 
@@ -203,7 +306,7 @@ Create a `.env` file in the project root. You can copy the example file:
 cp .env.example .env
 ```
 
-Example `.env` content:
+Example `.env`:
 
 ```env
 PORT=3000
@@ -211,60 +314,54 @@ MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/anime_subscription
 JWT_SECRET=change_this_secret
 ```
 
-### Environment Variable Explanation
+| Variable     | Required | Explanation                                           |
+| ------------ | -------: | ----------------------------------------------------- |
+| `PORT`       |       No | Server port. If empty, the server uses `3000`.        |
+| `MONGO_URI`  |      Yes | MongoDB connection string.                            |
+| `JWT_SECRET` |      Yes | Secret key used for signing and verifying JWT tokens. |
 
-| Variable     | Required | Explanation                                                       |
-| ------------ | -------: | ----------------------------------------------------------------- |
-| `PORT`       |       No | Port used to run the server. If empty, the app uses `3000`.       |
-| `MONGO_URI`  |      Yes | MongoDB connection string. Can be MongoDB Atlas or local MongoDB. |
-| `JWT_SECRET` |      Yes | Secret key used to sign and verify JWT tokens.                    |
+The server will not start if `MONGO_URI` or `JWT_SECRET` is missing.
 
 ---
 
-## Installation and Setup
+## 8. Installation and Setup
 
-### 1. Install dependencies
+### Step 1: Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Configure environment variables
-
-Create `.env` and fill in `MONGO_URI` and `JWT_SECRET`.
+### Step 2: Create `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit the `.env` file.
+Then fill in `MONGO_URI` and `JWT_SECRET`.
 
-### 3. Seed the database
-
-Run this command to insert sample data:
+### Step 3: Seed the database
 
 ```bash
 npm run seed
 ```
 
-The seeder will clear old sample collections and insert default test data.
+The seeder creates sample data for testing.
 
-### 4. Start the server
+### Step 4: Start the server
 
 ```bash
 npm start
 ```
 
-If the server runs successfully, you should see a message similar to:
+Expected console output:
 
 ```txt
 ✅ Connected to MongoDB via Mongoose! Silakan cek di Compass.
 🚀 Server berjalan di http://localhost:3000
 ```
 
-### 5. Test root endpoint
-
-Open this URL in a browser or Postman:
+### Step 5: Test the root endpoint
 
 ```txt
 GET http://localhost:3000/
@@ -289,23 +386,23 @@ Expected response:
 
 ---
 
-## Seeded Test Accounts
+## 9. Seeded Test Accounts
 
 After running `npm run seed`, these accounts are available:
 
-| Role         | Email            | Password  | Description                                       |
-| ------------ | ---------------- | --------- | ------------------------------------------------- |
-| Admin        | `admin@stts.edu` | `wawa123` | Can manage anime, plans, users, and transactions. |
-| Premium User | `user@stts.edu`  | `wawa123` | Has wallet balance and active premium access.     |
-| Basic User   | `basic@stts.edu` | `wawa123` | Has wallet balance but no premium access.         |
+| Role         | Email            | Password  | What It Is For                                      |
+| ------------ | ---------------- | --------- | --------------------------------------------------- |
+| Admin        | `admin@stts.edu` | `wawa123` | Testing admin-only endpoints.                       |
+| Premium User | `user@stts.edu`  | `wawa123` | Testing premium access and user endpoints.          |
+| Basic User   | `basic@stts.edu` | `wawa123` | Testing normal user access and premium restriction. |
 
-Use the login endpoint to get a token:
+To use protected endpoints, login first:
 
 ```txt
 POST /api/auth/login
 ```
 
-Then put the token in the request header for protected routes:
+Then send the token in this header:
 
 ```txt
 Authorization: Bearer <your_token_here>
@@ -313,258 +410,343 @@ Authorization: Bearer <your_token_here>
 
 ---
 
-## Postman Collection Testing
+## 10. How the Program Works
 
-The project includes a complete Postman collection file:
+This section explains the program flow, from server startup to individual feature flows.
+
+### 10.1 Server startup flow
+
+When `npm start` is executed, the program runs `index.js`.
 
 ```txt
-wawa.json
-```
-
-This collection is prepared to test **all endpoints** in the project, including:
-
-- Root health check
-- Auth register and login
-- Anime endpoints and Anime CRUD
-- Subscription Plan CRUD
-- Transaction CRUD
-- User CRUD
-- Review CRUD
-- Watchlist CRUD
-- Delete/cleanup endpoint tests
-
-### Before Importing the Collection
-
-Make sure the project is already installed and configured.
-
-```bash
-npm install
-cp .env.example .env
-```
-
-Fill your `.env` file with your MongoDB URI and JWT secret.
-
-```env
-PORT=3000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-```
-
-Then run the seeder and start the server:
-
-```bash
-npm run seed
 npm start
+   ↓
+node index.js
+   ↓
+Load environment variables using dotenv
+   ↓
+Create Express app
+   ↓
+Register global middleware:
+- express.json()
+- express.urlencoded()
+- static uploads route
+   ↓
+Register root endpoint `/`
+   ↓
+Register API routes under `/api`
+   ↓
+Connect to MongoDB using MONGO_URI
+   ↓
+Start server on PORT
 ```
 
-The collection assumes the API is running at:
+If MongoDB connection fails or required environment variables are missing, the server stops and prints an error.
+
+### 10.2 General request flow
+
+Every request follows this general pattern:
 
 ```txt
-http://localhost:3000
+Client / Postman
+   ↓
+Express route
+   ↓
+Middleware, if the route uses middleware
+   ↓
+Controller function
+   ↓
+MongoDB or external API operation
+   ↓
+JSON response
 ```
 
-If your server uses another port, change the `base_url` collection variable in Postman.
-
-### How to Import the Collection
-
-1. Open Postman.
-2. Click **Import**.
-3. Choose the file `wawa.json`.
-4. Open the imported collection named **Anime Subscription API - Complete Endpoint Testing**.
-5. Go to the collection **Variables** tab.
-6. Confirm that `base_url` is set to `http://localhost:3000`.
-7. Save the collection.
-
-### Collection Variables
-
-The collection uses variables so you do not need to manually copy every ID and token.
-
-| Variable                  | Purpose                                                    |
-| ------------------------- | ---------------------------------------------------------- |
-| `base_url`                | Base API URL, default `http://localhost:3000`.             |
-| `admin_email`             | Seeded admin email, default `admin@stts.edu`.              |
-| `user_email`              | Seeded user email, default `user@stts.edu`.                |
-| `test_password`           | Seeded password, default `wawa123`.                        |
-| `admin_token`             | Saved automatically after admin login.                     |
-| `user_token`              | Saved automatically after user login.                      |
-| `admin_user_id`           | Saved automatically after admin login.                     |
-| `user_id`                 | Saved automatically after user login or user list request. |
-| `registered_user_id`      | Saved after the temporary register request.                |
-| `anime_id`                | Saved from seeded anime or created anime.                  |
-| `created_anime_id`        | Saved after creating anime through Postman.                |
-| `premium_anime_id`        | Saved from seeded premium anime.                           |
-| `subscription_id`         | Saved from seeded subscription plans.                      |
-| `created_subscription_id` | Saved after creating a temporary subscription plan.        |
-| `transaction_id`          | Saved from transaction response/list.                      |
-| `created_transaction_id`  | Saved after purchasing a plan through Postman.             |
-| `review_id`               | Saved after creating a review.                             |
-| `watchlist_id`            | Saved after adding anime to watchlist.                     |
-
-### Recommended Collection Run Order
-
-The collection is organized in this order:
-
-| Folder                                | Purpose                                                           |
-| ------------------------------------- | ----------------------------------------------------------------- |
-| `00. Health Check`                    | Confirms the server is running.                                   |
-| `01. Auth`                            | Registers a temporary user, logs in admin, and logs in user.      |
-| `02. Load Seed Data IDs`              | Loads seeded anime, subscription, and user IDs into variables.    |
-| `03. Anime Endpoints`                 | Tests Jikan search, anime read, create, update, and watch access. |
-| `04. Subscription Plan Endpoints`     | Tests subscription plan read, create, and update.                 |
-| `05. Transaction Endpoints`           | Tests purchase, transaction history, admin list, and update.      |
-| `06. Review Endpoints`                | Tests review read, create, and update.                            |
-| `07. Watchlist Endpoints`             | Tests watchlist read, create, and update.                         |
-| `08. User Endpoints (Admin)`          | Tests admin user read and update.                                 |
-| `09. Cleanup / Delete Endpoint Tests` | Tests delete endpoints and removes temporary data.                |
-
-Run the folders from top to bottom. This matters because later requests depend on variables created by earlier requests.
-
-### Important Testing Notes
-
-1. **Run `npm run seed` before a full test run.**  
-   This resets the database and creates clean sample data.
-
-2. **Run Auth first.**  
-   Protected routes need either `admin_token` or `user_token`.
-
-3. **Do not skip `02. Load Seed Data IDs`.**  
-   This folder saves important IDs such as `subscription_id`, `anime_id`, and `premium_anime_id`.
-
-4. **The collection creates temporary data.**  
-   It creates a temporary user, anime, subscription plan, transaction, review, and watchlist item.
-
-5. **Run the cleanup folder at the end.**  
-   The cleanup folder tests all delete endpoints and removes temporary data from the database.
-
-6. **If you run only one request manually, make sure its variables already exist.**  
-   For example, `GET /api/anime/{{created_anime_id}}` requires the create anime request to run first.
-
-7. **If a duplicate review or watchlist error appears, run the seeder again.**  
-   The API prevents one user from reviewing or adding the same anime twice.
-
-### Testing Authentication in Postman
-
-The collection already uses Bearer Token authentication.
-
-Admin-only requests use:
+Example for creating anime:
 
 ```txt
-{{admin_token}}
+POST /api/anime
+   ↓
+authenticate middleware checks JWT token
+   ↓
+authorize middleware checks admin role
+   ↓
+upload middleware handles optional coverImage file
+   ↓
+validate middleware checks body fields
+   ↓
+createAnime controller inserts anime into MongoDB
+   ↓
+API returns created anime data
 ```
 
-User requests use:
+### 10.3 Authentication flow
 
 ```txt
-{{user_token}}
+User sends email and password
+   ↓
+API searches user by email
+   ↓
+API compares password with hashed password using bcrypt
+   ↓
+If valid, API creates JWT token
+   ↓
+Client stores token
+   ↓
+Client sends token in Authorization header for protected routes
 ```
 
-These are filled automatically by:
+### 10.4 Register flow
 
 ```txt
-Login Admin - Save Admin Token
-Login User - Save User Token
+POST /api/auth/register
+   ↓
+validate register body
+   ↓
+normalize email to lowercase
+   ↓
+check if email already exists
+   ↓
+hash password with bcrypt
+   ↓
+insert user into users collection
+   ↓
+return userId
 ```
 
-### Testing Anime Image Upload
-
-The anime create and update requests use `multipart/form-data` because the API supports optional image upload.
-
-By default, the `coverImage` file field is disabled so the request can run without choosing a local file.
-
-To test image upload:
-
-1. Open `Create Anime (Admin) - Save Created Anime ID`.
-2. Go to **Body**.
-3. Choose **form-data**.
-4. Enable the `coverImage` row.
-5. Select an image file from your computer.
-6. Send the request.
-
-Allowed image formats:
+### 10.5 Login flow
 
 ```txt
-jpeg, jpg, png, webp
+POST /api/auth/login
+   ↓
+validate login body
+   ↓
+find user by email
+   ↓
+compare password with bcrypt
+   ↓
+create JWT token containing id, role, and email
+   ↓
+return token and safe user data
 ```
 
-Maximum file size:
+The password is never returned in the login response.
+
+### 10.6 Anime browsing flow
 
 ```txt
-5 MB
+GET /api/anime
+   ↓
+getAllAnime controller
+   ↓
+read all anime from animes collection
+   ↓
+sort by newest createdAt
+   ↓
+normalize anime fields
+   ↓
+return anime list
 ```
 
-### Expected Successful Status Codes
+This endpoint is public, so users do not need to login just to browse anime.
 
-| Endpoint Type                              | Expected Status    |
-| ------------------------------------------ | ------------------ |
-| Successful `GET`                           | `200 OK`           |
-| Successful `POST` create/register/purchase | `201 Created`      |
-| Successful `PUT` update                    | `200 OK`           |
-| Successful `DELETE`                        | `200 OK`           |
-| Unauthorized request without token         | `401 Unauthorized` |
-| Normal user accessing admin endpoint       | `403 Forbidden`    |
-| Invalid MongoDB ObjectId                   | `400 Bad Request`  |
-| Data not found                             | `404 Not Found`    |
+### 10.7 Anime watch flow
 
-### Quick Full Test Checklist
+```txt
+GET /api/anime/:id/watch
+   ↓
+authenticate user token
+   ↓
+find anime by id
+   ↓
+find logged-in user by token id
+   ↓
+check if anime is premium
+   ↓
+if anime is free, allow watch
+   ↓
+if anime is premium, check user's subscription_status and premium_until
+   ↓
+if premium is active, allow watch
+   ↓
+if premium expired, set user back to basic and block watch
+```
 
-Use this checklist to test the whole project quickly:
+This flow is important because it separates **viewing anime data** from **watching anime content**.
 
-1. `npm run seed`
-2. `npm start`
-3. Import `wawa.json` into Postman.
-4. Run `00. Health Check`.
-5. Run `01. Auth`.
-6. Run `02. Load Seed Data IDs`.
-7. Run `03` until `08` from top to bottom.
-8. Run `09. Cleanup / Delete Endpoint Tests`.
-9. Confirm every request returns a successful status code.
+- Viewing anime data can be public.
+- Watching premium anime requires login and active premium status.
+
+### 10.8 Subscription purchase flow with Wallet
+
+```txt
+POST /api/transactions/purchase
+   ↓
+authenticate user token
+   ↓
+validate planId and paymentMethod
+   ↓
+start MongoDB session/transaction
+   ↓
+find subscription plan
+   ↓
+find logged-in user
+   ↓
+check wallet balance
+   ↓
+deduct wallet balance
+   ↓
+activate premium subscription
+   ↓
+create invoice with status Success
+   ↓
+commit MongoDB transaction
+   ↓
+return transaction result
+```
+
+Wallet payment is completed immediately because the system can directly deduct the user's wallet balance.
+
+### 10.9 Subscription purchase flow with non-wallet payment
+
+```txt
+POST /api/transactions/purchase
+   ↓
+authenticate user token
+   ↓
+validate planId and paymentMethod
+   ↓
+find subscription plan
+   ↓
+create invoice with status Pending
+   ↓
+return pending transaction result
+```
+
+For methods such as `bank_transfer`, `credit_card`, and `e-wallet`, this project simulates manual confirmation. The transaction starts as `Pending`. Admin later updates it to `Success`.
+
+### 10.10 Admin transaction confirmation flow
+
+```txt
+PUT /api/transactions/:id
+   ↓
+authenticate admin token
+   ↓
+authorize admin role
+   ↓
+find transaction
+   ↓
+if status changes from Pending/Failed to Success:
+     find subscription plan
+     activate user's premium subscription
+     save premium_until_after_success
+   ↓
+update transaction
+   ↓
+return updated transaction
+```
+
+### 10.11 Premium extension flow
+
+If a user still has active premium time and buys another plan, the new duration is added after the current premium end date.
+
+```txt
+Current date: 2026-07-09
+Current premium_until: 2026-08-01
+User buys 30-day plan
+New premium_until: 2026-08-31
+```
+
+If the user's premium is already expired, the new duration starts from the current date.
+
+### 10.12 Review flow
+
+```txt
+POST /api/reviews
+   ↓
+authenticate user token
+   ↓
+validate anime_id, rating, and comment
+   ↓
+check anime exists
+   ↓
+check user has not reviewed the same anime before
+   ↓
+insert review
+   ↓
+return created review
+```
+
+The API prevents duplicate reviews by the same user for the same anime.
+
+### 10.13 Watchlist flow
+
+```txt
+POST /api/watchlist
+   ↓
+authenticate user token
+   ↓
+validate anime_id and status
+   ↓
+check anime exists
+   ↓
+check anime is not already in user's watchlist
+   ↓
+insert watchlist item
+   ↓
+return created watchlist item
+```
+
+The API prevents duplicate watchlist rows for the same anime and user.
+
+### 10.14 Admin maintenance flow
+
+Admin maintenance means managing master data and user data.
+
+```txt
+Admin login
+   ↓
+Admin receives JWT token
+   ↓
+Admin sends token to admin endpoint
+   ↓
+authenticate checks token
+   ↓
+authorize checks role = admin
+   ↓
+controller performs create/update/delete/list action
+   ↓
+response returned to admin
+```
+
+Admin endpoints are useful for building an admin dashboard later.
 
 ---
 
-## Authentication and Authorization
-
-### Authentication
-
-Authentication is handled using JWT. Protected routes require this header:
-
-```txt
-Authorization: Bearer <token>
-```
-
-The token contains basic user information such as:
-
-```json
-{
-  "id": "user_id",
-  "role": "user",
-  "email": "user@example.com"
-}
-```
-
-### Authorization
-
-Some endpoints require the user to have the `admin` role. For example:
-
-- Creating anime
-- Updating anime
-- Deleting anime
-- Creating subscription plans
-- Managing users
-- Viewing all transactions
-
-If a normal user tries to access an admin-only endpoint, the API returns `403 Forbidden`.
-
----
-
-## Database Collections
+## 11. Database Collections and Relationships
 
 The project uses MongoDB collections directly through `mongoose.connection.db`.
 
-### 1. `users`
+### 11.1 Relationship overview
 
-Stores user account data.
+```txt
+users
+  ├── reviews.user_id
+  ├── watchlists.user_id
+  └── invoices.user_id
 
-Example document:
+animes
+  ├── reviews.anime_id
+  └── watchlists.anime_id
+
+subscriptionplans
+  └── invoices.plan_id
+```
+
+### 11.2 `users` collection
+
+Stores account data.
+
+Example:
 
 ```json
 {
@@ -585,16 +767,19 @@ Important fields:
 
 | Field                 | Explanation                                            |
 | --------------------- | ------------------------------------------------------ |
-| `role`                | Determines whether the user is a normal user or admin. |
-| `wallet`              | User balance for wallet payments.                      |
+| `username`            | Display name of the user.                              |
+| `email`               | Login identifier. Stored in lowercase.                 |
+| `password`            | Hashed password. Not returned in normal API responses. |
+| `role`                | Either `user` or `admin`.                              |
+| `wallet`              | User balance used for wallet payment.                  |
 | `subscription_status` | Either `basic` or `premium`.                           |
-| `premium_until`       | Date when premium access expires.                      |
+| `premium_until`       | Date when premium access ends.                         |
 
-### 2. `animes`
+### 11.3 `animes` collection
 
-Stores anime data.
+Stores local anime catalog data.
 
-Example document:
+Example:
 
 ```json
 {
@@ -610,11 +795,11 @@ Example document:
 }
 ```
 
-### 3. `subscriptionplans`
+### 11.4 `subscriptionplans` collection
 
-Stores subscription plan data.
+Stores subscription plan/package data.
 
-Example document:
+Example:
 
 ```json
 {
@@ -628,11 +813,11 @@ Example document:
 }
 ```
 
-### 4. `invoices`
+### 11.5 `invoices` collection
 
-Stores subscription purchase transactions.
+Stores purchase transaction records.
 
-Example document:
+Example:
 
 ```json
 {
@@ -649,11 +834,11 @@ Example document:
 }
 ```
 
-### 5. `reviews`
+### 11.6 `reviews` collection
 
-Stores user reviews for anime.
+Stores user ratings and comments.
 
-Example document:
+Example:
 
 ```json
 {
@@ -667,11 +852,11 @@ Example document:
 }
 ```
 
-### 6. `watchlists`
+### 11.7 `watchlists` collection
 
-Stores anime saved by users.
+Stores saved anime and user watch progress.
 
-Example document:
+Example:
 
 ```json
 {
@@ -686,7 +871,7 @@ Example document:
 
 ---
 
-## API Endpoint Documentation
+## 12. Endpoint Summary
 
 Base URL:
 
@@ -694,33 +879,112 @@ Base URL:
 http://localhost:3000
 ```
 
-If your `.env` uses another port, replace `3000` with your port.
+### 12.1 Root endpoint
+
+| Method | Endpoint | Access | What It Is For                                                 |
+| ------ | -------- | ------ | -------------------------------------------------------------- |
+| `GET`  | `/`      | Public | Checks if the API is running and shows available route groups. |
+
+### 12.2 Auth endpoints
+
+| Method | Endpoint             | Access | What It Is For                          |
+| ------ | -------------------- | ------ | --------------------------------------- |
+| `POST` | `/api/auth/register` | Public | Creates a new user account.             |
+| `POST` | `/api/auth/login`    | Public | Logs in a user and returns a JWT token. |
+
+### 12.3 Anime endpoints
+
+| Method   | Endpoint                           | Access         | What It Is For                                                   |
+| -------- | ---------------------------------- | -------------- | ---------------------------------------------------------------- |
+| `GET`    | `/api/anime/jikan/search?q=naruto` | Public         | Searches anime from Jikan external API.                          |
+| `GET`    | `/api/anime`                       | Public         | Gets all anime from local database.                              |
+| `GET`    | `/api/anime/:id`                   | Public         | Gets detail of one anime.                                        |
+| `POST`   | `/api/anime`                       | Admin          | Creates a new anime.                                             |
+| `PUT`    | `/api/anime/:id`                   | Admin          | Updates anime data.                                              |
+| `DELETE` | `/api/anime/:id`                   | Admin          | Deletes anime and related review/watchlist rows.                 |
+| `GET`    | `/api/anime/:id/watch`             | Logged-in user | Checks if user can watch the anime and returns a fake watch URL. |
+
+### 12.4 Subscription endpoints
+
+| Method   | Endpoint                 | Access | What It Is For                    |
+| -------- | ------------------------ | ------ | --------------------------------- |
+| `GET`    | `/api/subscriptions`     | Public | Gets all available premium plans. |
+| `GET`    | `/api/subscriptions/:id` | Public | Gets detail of one premium plan.  |
+| `POST`   | `/api/subscriptions`     | Admin  | Creates a new premium plan.       |
+| `PUT`    | `/api/subscriptions/:id` | Admin  | Updates a premium plan.           |
+| `DELETE` | `/api/subscriptions/:id` | Admin  | Deletes a premium plan.           |
+
+### 12.5 Transaction endpoints
+
+| Method   | Endpoint                     | Access         | What It Is For                             |
+| -------- | ---------------------------- | -------------- | ------------------------------------------ |
+| `POST`   | `/api/transactions/purchase` | Logged-in user | Buys a subscription plan.                  |
+| `GET`    | `/api/transactions/history`  | Logged-in user | Gets logged-in user's transaction history. |
+| `GET`    | `/api/transactions`          | Admin          | Gets all transaction records.              |
+| `PUT`    | `/api/transactions/:id`      | Admin          | Updates transaction status/payment method. |
+| `DELETE` | `/api/transactions/:id`      | Admin          | Deletes a transaction record.              |
+
+### 12.6 User endpoints
+
+| Method   | Endpoint         | Access | What It Is For                                      |
+| -------- | ---------------- | ------ | --------------------------------------------------- |
+| `GET`    | `/api/users`     | Admin  | Gets all users without passwords.                   |
+| `GET`    | `/api/users/:id` | Admin  | Gets one user without password.                     |
+| `PUT`    | `/api/users/:id` | Admin  | Updates user data, wallet, role, or premium status. |
+| `DELETE` | `/api/users/:id` | Admin  | Deletes a user and related review/watchlist rows.   |
+
+### 12.7 Review endpoints
+
+| Method   | Endpoint                      | Access                | What It Is For                                     |
+| -------- | ----------------------------- | --------------------- | -------------------------------------------------- |
+| `GET`    | `/api/reviews/anime/:animeId` | Public                | Gets all reviews and average rating for one anime. |
+| `GET`    | `/api/reviews/my`             | Logged-in user        | Gets reviews made by the logged-in user.           |
+| `POST`   | `/api/reviews`                | Logged-in user        | Creates a review for an anime.                     |
+| `PUT`    | `/api/reviews/:id`            | Review owner or admin | Updates a review.                                  |
+| `DELETE` | `/api/reviews/:id`            | Review owner or admin | Deletes a review.                                  |
+
+### 12.8 Watchlist endpoints
+
+| Method   | Endpoint             | Access                   | What It Is For                   |
+| -------- | -------------------- | ------------------------ | -------------------------------- |
+| `GET`    | `/api/watchlist`     | Logged-in user           | Gets logged-in user's watchlist. |
+| `POST`   | `/api/watchlist`     | Logged-in user           | Adds anime to watchlist.         |
+| `PUT`    | `/api/watchlist/:id` | Watchlist owner or admin | Updates watchlist status.        |
+| `DELETE` | `/api/watchlist/:id` | Watchlist owner or admin | Removes anime from watchlist.    |
 
 ---
 
-## Root Endpoint
+## 13. Detailed Endpoint Explanation
 
-### Check API Status
-
-```txt
-GET /
-```
-
-This endpoint checks whether the API is running and returns the main route list.
+This section explains each endpoint in more detail: purpose, access, body, and the internal flow.
 
 ---
 
-## Auth Endpoints
+### 13.1 `GET /`
 
-### Register User
+**Purpose:** Check whether the server is running.
+
+**Access:** Public
+
+**When to use it:** Use this first after running `npm start` to confirm that the API is alive.
+
+**Internal flow:**
 
 ```txt
-POST /api/auth/register
+request reaches index.js
+   ↓
+root route returns message and route list
 ```
 
-Access: Public
+---
 
-Request body:
+### 13.2 `POST /api/auth/register`
+
+**Purpose:** Create a new user account.
+
+**Access:** Public
+
+**Request body:**
 
 ```json
 {
@@ -731,30 +995,40 @@ Request body:
 }
 ```
 
-Notes:
+**Field explanation:**
 
-- `role` is optional.
-- If role is not provided, it defaults to `user`.
-- Password is hashed before being stored.
+| Field      | Required | Explanation                                                   |
+| ---------- | -------: | ------------------------------------------------------------- |
+| `username` |      Yes | Name for the user account. Minimum 3 characters.              |
+| `email`    |      Yes | User email. Must be unique.                                   |
+| `password` |      Yes | Plain password from request. It will be hashed before saving. |
+| `role`     |       No | Either `user` or `admin`. Defaults to `user`.                 |
 
-Success response:
-
-```json
-{
-  "message": "User registered successfully",
-  "userId": "generated_user_id"
-}
-```
-
-### Login User
+**Internal flow:**
 
 ```txt
-POST /api/auth/login
+validate body
+   ↓
+check duplicate email
+   ↓
+hash password
+   ↓
+insert into users collection
+   ↓
+return created userId
 ```
 
-Access: Public
+**Important note:** In a real production app, normal public registration usually should not allow users to register as `admin`. For this school/testing project, the schema allows it so role-based testing is easier.
 
-Request body:
+---
+
+### 13.3 `POST /api/auth/login`
+
+**Purpose:** Authenticate a user and return a JWT token.
+
+**Access:** Public
+
+**Request body:**
 
 ```json
 {
@@ -763,166 +1037,302 @@ Request body:
 }
 ```
 
-Success response:
+**Success result:**
+
+- Returns a JWT token.
+- Returns safe user data without password.
+- Token expires in 1 day.
+
+**Internal flow:**
+
+```txt
+validate body
+   ↓
+find user by email
+   ↓
+compare password using bcrypt
+   ↓
+create JWT token
+   ↓
+return token and user data
+```
+
+**How to use the token:**
+
+```txt
+Authorization: Bearer <token>
+```
+
+---
+
+### 13.4 `GET /api/anime/jikan/search?q=naruto`
+
+**Purpose:** Search anime from the Jikan public API.
+
+**Access:** Public
+
+**Query parameter:**
+
+| Parameter | Required | Explanation                                                     |
+| --------- | -------: | --------------------------------------------------------------- |
+| `q`       |      Yes | Search keyword, for example `naruto`, `one piece`, or `bleach`. |
+
+**Internal flow:**
+
+```txt
+read q query parameter
+   ↓
+if q is empty, return 400
+   ↓
+call https://api.jikan.moe/v4/anime using axios
+   ↓
+return Jikan data
+```
+
+**What it is for:** This endpoint demonstrates third-party API integration. The data is not saved automatically into MongoDB. It only searches and returns external anime data.
+
+---
+
+### 13.5 `GET /api/anime`
+
+**Purpose:** Get all anime stored in the local database.
+
+**Access:** Public
+
+**What it is for:** Use this to show the anime catalog on a homepage or anime list page.
+
+**Internal flow:**
+
+```txt
+read all documents from animes collection
+   ↓
+sort newest first
+   ↓
+normalize field names
+   ↓
+return anime list
+```
+
+---
+
+### 13.6 `GET /api/anime/:id`
+
+**Purpose:** Get detailed information about one anime.
+
+**Access:** Public
+
+**Path parameter:**
+
+| Parameter | Explanation                    |
+| --------- | ------------------------------ |
+| `id`      | MongoDB ObjectId of the anime. |
+
+**Internal flow:**
+
+```txt
+validate anime id
+   ↓
+find anime by _id
+   ↓
+if not found, return 404
+   ↓
+return anime data
+```
+
+---
+
+### 13.7 `POST /api/anime`
+
+**Purpose:** Create a new anime in the local catalog.
+
+**Access:** Admin only
+
+**Content type:** `multipart/form-data`
+
+**Headers:**
+
+```txt
+Authorization: Bearer <admin_token>
+```
+
+**Form-data fields:**
+
+| Field        | Required | Type    | Explanation                                      |
+| ------------ | -------: | ------- | ------------------------------------------------ |
+| `title`      |      Yes | text    | Anime title.                                     |
+| `synopsis`   |      Yes | text    | Anime description.                               |
+| `episodes`   |      Yes | number  | Number of episodes.                              |
+| `isPremium`  |       No | boolean | Whether this anime requires premium access.      |
+| `type`       |       No | text    | Anime type, for example `TV`, `Movie`, or `OVA`. |
+| `coverImage` |       No | file    | Anime cover image.                               |
+
+**Internal flow:**
+
+```txt
+authenticate token
+   ↓
+authorize admin role
+   ↓
+process image upload if provided
+   ↓
+validate body using Joi
+   ↓
+insert anime into animes collection
+   ↓
+return created anime
+```
+
+**What it is for:** Admin uses this endpoint to add new content to the platform.
+
+---
+
+### 13.8 `PUT /api/anime/:id`
+
+**Purpose:** Update anime data.
+
+**Access:** Admin only
+
+**Content type:** `multipart/form-data`
+
+**Body:** You can send one or more anime fields, such as:
 
 ```json
 {
-  "message": "Login successful",
-  "token": "jwt_token_here",
-  "user": {
-    "id": "user_id",
-    "username": "wawa_user",
-    "email": "user@stts.edu",
-    "role": "user",
-    "wallet": 500000,
-    "subscription_status": "premium",
-    "premium_until": "Date"
-  }
+  "title": "Updated Anime Title",
+  "episodes": 24,
+  "isPremium": true
 }
 ```
 
----
-
-## Anime Endpoints
-
-### Search Anime from Jikan API
+**Internal flow:**
 
 ```txt
-GET /api/anime/jikan/search?q=naruto
+authenticate token
+   ↓
+authorize admin role
+   ↓
+validate anime id
+   ↓
+process new image if provided
+   ↓
+validate update body
+   ↓
+update anime document
+   ↓
+return updated anime
 ```
-
-Access: Public
-
-This endpoint searches anime from the external Jikan API.
-
-Query parameter:
-
-| Parameter | Required | Explanation     |
-| --------- | -------: | --------------- |
-| `q`       |      Yes | Search keyword. |
-
-### Get All Anime
-
-```txt
-GET /api/anime
-```
-
-Access: Public
-
-Returns all anime stored in the local database.
-
-### Get Anime by ID
-
-```txt
-GET /api/anime/:id
-```
-
-Access: Public
-
-Returns one anime by MongoDB ObjectId.
-
-### Create Anime
-
-```txt
-POST /api/anime
-```
-
-Access: Admin only
-
-Headers:
-
-```txt
-Authorization: Bearer <admin_token>
-Content-Type: multipart/form-data
-```
-
-Form-data fields:
-
-| Field        | Type    | Required | Explanation                                      |
-| ------------ | ------- | -------: | ------------------------------------------------ |
-| `title`      | text    |      Yes | Anime title.                                     |
-| `synopsis`   | text    |      Yes | Anime description.                               |
-| `episodes`   | number  |      Yes | Total episode count.                             |
-| `isPremium`  | boolean |       No | Whether anime requires premium access.           |
-| `type`       | text    |       No | Anime type, for example `TV`, `Movie`, or `OVA`. |
-| `coverImage` | file    |       No | Anime cover image.                               |
-
-### Update Anime
-
-```txt
-PUT /api/anime/:id
-```
-
-Access: Admin only
-
-Headers:
-
-```txt
-Authorization: Bearer <admin_token>
-Content-Type: multipart/form-data
-```
-
-You can update one or more anime fields.
-
-### Delete Anime
-
-```txt
-DELETE /api/anime/:id
-```
-
-Access: Admin only
-
-When anime is deleted, related reviews and watchlist items are also deleted so there are no broken references.
-
-### Watch Anime
-
-```txt
-GET /api/anime/:id/watch
-```
-
-Access: Logged-in user
-
-This endpoint checks whether the user is allowed to watch the anime.
-
-Logic:
-
-- If anime is not premium, any logged-in user can watch it.
-- If anime is premium, the user must have `subscription_status: "premium"` and `premium_until` must not be expired.
-- If premium is expired, the API automatically changes the user back to `basic`.
 
 ---
 
-## Subscription Plan Endpoints
+### 13.9 `DELETE /api/anime/:id`
 
-### Get All Subscription Plans
+**Purpose:** Delete anime from the local catalog.
 
-```txt
-GET /api/subscriptions
-```
+**Access:** Admin only
 
-Access: Public
-
-Returns all subscription plans sorted by price.
-
-### Get Subscription Plan by ID
+**Internal flow:**
 
 ```txt
-GET /api/subscriptions/:id
+authenticate token
+   ↓
+authorize admin role
+   ↓
+validate anime id
+   ↓
+delete anime
+   ↓
+delete related reviews
+   ↓
+delete related watchlist rows
+   ↓
+return success message
 ```
 
-Access: Public
+**Why related data is deleted:** If anime is deleted, reviews and watchlist items that point to that anime would become broken references. The controller cleans them up.
 
-Returns one subscription plan by ID.
+---
 
-### Create Subscription Plan
+### 13.10 `GET /api/anime/:id/watch`
+
+**Purpose:** Check if a logged-in user can watch an anime.
+
+**Access:** Logged-in user
+
+**Headers:**
 
 ```txt
-POST /api/subscriptions
+Authorization: Bearer <user_token>
 ```
 
-Access: Admin only
+**Internal flow:**
 
-Request body:
+```txt
+authenticate token
+   ↓
+validate anime id and user id
+   ↓
+find anime
+   ↓
+find logged-in user
+   ↓
+check if anime is premium
+   ↓
+if anime is free, allow watch
+   ↓
+if anime is premium, check active premium subscription
+   ↓
+return fake videoUrl if allowed
+```
+
+**What it is for:** This endpoint represents the streaming access check. It does not stream a real video file. It returns a fake URL to show that the user is allowed to watch.
+
+---
+
+### 13.11 `GET /api/subscriptions`
+
+**Purpose:** Get all available subscription plans.
+
+**Access:** Public
+
+**What it is for:** Use this endpoint to display available premium packages to users before they purchase.
+
+**Internal flow:**
+
+```txt
+read all subscriptionplans
+   ↓
+sort by price ascending
+   ↓
+return plan list
+```
+
+---
+
+### 13.12 `GET /api/subscriptions/:id`
+
+**Purpose:** Get one subscription plan by ID.
+
+**Access:** Public
+
+**Internal flow:**
+
+```txt
+validate plan id
+   ↓
+find plan by _id
+   ↓
+return plan or 404
+```
+
+---
+
+### 13.13 `POST /api/subscriptions`
+
+**Purpose:** Create a new subscription plan.
+
+**Access:** Admin only
+
+**Request body:**
 
 ```json
 {
@@ -933,15 +1343,31 @@ Request body:
 }
 ```
 
-### Update Subscription Plan
+**Internal flow:**
 
 ```txt
-PUT /api/subscriptions/:id
+authenticate token
+   ↓
+authorize admin role
+   ↓
+validate body
+   ↓
+insert plan into subscriptionplans
+   ↓
+return created plan
 ```
 
-Access: Admin only
+**What it is for:** Admin can create new premium packages without changing application code.
 
-Request body example:
+---
+
+### 13.14 `PUT /api/subscriptions/:id`
+
+**Purpose:** Update an existing subscription plan.
+
+**Access:** Admin only
+
+**Example body:**
 
 ```json
 {
@@ -950,29 +1376,55 @@ Request body example:
 }
 ```
 
-### Delete Subscription Plan
+**Internal flow:**
 
 ```txt
-DELETE /api/subscriptions/:id
+authenticate token
+   ↓
+authorize admin role
+   ↓
+validate plan id
+   ↓
+validate body
+   ↓
+update plan
+   ↓
+return updated plan
 ```
-
-Access: Admin only
-
-Deletes a subscription plan from the database.
 
 ---
 
-## Transaction Endpoints
+### 13.15 `DELETE /api/subscriptions/:id`
 
-### Purchase Subscription Plan
+**Purpose:** Delete a subscription plan.
+
+**Access:** Admin only
+
+**Internal flow:**
 
 ```txt
-POST /api/transactions/purchase
+authenticate token
+   ↓
+authorize admin role
+   ↓
+validate plan id
+   ↓
+delete plan
+   ↓
+return success message
 ```
 
-Access: Logged-in user
+**Note:** Existing transaction records may still reference the deleted plan ID. In a production system, you may prefer soft delete instead.
 
-Request body:
+---
+
+### 13.16 `POST /api/transactions/purchase`
+
+**Purpose:** Buy a subscription plan.
+
+**Access:** Logged-in user
+
+**Request body:**
 
 ```json
 {
@@ -981,49 +1433,112 @@ Request body:
 }
 ```
 
-Allowed payment methods:
+**Allowed payment methods:**
 
 - `Wallet`
 - `e-wallet`
 - `credit_card`
 - `bank_transfer`
 
-Logic:
-
-- If `paymentMethod` is `Wallet`, the system checks the user's wallet balance.
-- If the wallet balance is enough, the balance is reduced and premium access is activated immediately.
-- If the payment method is not `Wallet`, the transaction is created as `Pending`.
-- Admin can later update the transaction status to `Success`.
-
-### Get My Transaction History
+**Internal flow for Wallet:**
 
 ```txt
-GET /api/transactions/history
+authenticate user
+   ↓
+validate request body
+   ↓
+start MongoDB session
+   ↓
+find plan and user
+   ↓
+check wallet balance
+   ↓
+deduct wallet
+   ↓
+activate premium
+   ↓
+create invoice with Success status
+   ↓
+commit session
 ```
 
-Access: Logged-in user
-
-Returns the transaction history of the currently logged-in user.
-
-### Get All Transactions
+**Internal flow for non-Wallet:**
 
 ```txt
-GET /api/transactions
+authenticate user
+   ↓
+validate request body
+   ↓
+find plan and user
+   ↓
+create invoice with Pending status
+   ↓
+admin confirms later
 ```
 
-Access: Admin only
+**What it is for:** This endpoint represents the user's checkout/purchase action.
 
-Returns all transaction records with user and subscription plan details.
+---
 
-### Update Transaction
+### 13.17 `GET /api/transactions/history`
+
+**Purpose:** Get the logged-in user's own transaction history.
+
+**Access:** Logged-in user
+
+**Internal flow:**
 
 ```txt
-PUT /api/transactions/:id
+authenticate token
+   ↓
+read user id from token
+   ↓
+find invoices with user_id
+   ↓
+lookup subscription plan details
+   ↓
+return user's transaction history
 ```
 
-Access: Admin only
+**What it is for:** A user can see what plans they bought and whether payments are pending or successful.
 
-Request body:
+---
+
+### 13.18 `GET /api/transactions`
+
+**Purpose:** Get all transactions in the system.
+
+**Access:** Admin only
+
+**Internal flow:**
+
+```txt
+authenticate token
+   ↓
+authorize admin role
+   ↓
+read all invoices
+   ↓
+lookup user data
+   ↓
+lookup subscription plan data
+   ↓
+hide user password
+   ↓
+return transaction list
+```
+
+**What it is for:** Admin can monitor all purchases and payments.
+
+---
+
+### 13.19 `PUT /api/transactions/:id`
+
+**Purpose:** Update a transaction status or payment method.
+
+**Access:** Admin only
+
+**Example body:**
 
 ```json
 {
@@ -1032,59 +1547,112 @@ Request body:
 }
 ```
 
-Allowed status values:
+**Allowed statuses:**
 
 - `Success`
 - `Pending`
 - `Failed`
 
-If a pending transaction is updated to `Success`, the system activates the user's premium subscription.
-
-### Delete Transaction
+**Internal flow:**
 
 ```txt
-DELETE /api/transactions/:id
+authenticate admin
+   ↓
+authorize admin role
+   ↓
+validate transaction id
+   ↓
+find existing transaction
+   ↓
+if changing to Success and old status was not Success:
+     activate user's premium subscription
+   ↓
+update transaction
+   ↓
+return updated transaction
 ```
 
-Access: Admin only
-
-Deletes a transaction record.
+**What it is for:** This simulates payment confirmation for manual payment methods.
 
 ---
 
-## User Endpoints
+### 13.20 `DELETE /api/transactions/:id`
 
-All user management endpoints are admin-only.
+**Purpose:** Delete a transaction record.
 
-### Get All Users
+**Access:** Admin only
 
-```txt
-GET /api/users
-```
-
-Access: Admin only
-
-Returns all users without showing passwords.
-
-### Get User by ID
+**Internal flow:**
 
 ```txt
-GET /api/users/:id
+authenticate admin
+   ↓
+authorize admin role
+   ↓
+validate transaction id
+   ↓
+delete invoice
+   ↓
+return success message
 ```
 
-Access: Admin only
+---
 
-Returns one user without showing password.
+### 13.21 `GET /api/users`
 
-### Update User
+**Purpose:** Get all users.
+
+**Access:** Admin only
+
+**Internal flow:**
 
 ```txt
-PUT /api/users/:id
+authenticate admin
+   ↓
+authorize admin role
+   ↓
+find all users
+   ↓
+exclude password field
+   ↓
+return user list
 ```
 
-Access: Admin only
+**What it is for:** Admin user management page.
 
-Request body example:
+---
+
+### 13.22 `GET /api/users/:id`
+
+**Purpose:** Get one user by ID.
+
+**Access:** Admin only
+
+**Internal flow:**
+
+```txt
+authenticate admin
+   ↓
+authorize admin role
+   ↓
+validate user id
+   ↓
+find user
+   ↓
+exclude password
+   ↓
+return user detail
+```
+
+---
+
+### 13.23 `PUT /api/users/:id`
+
+**Purpose:** Update user data.
+
+**Access:** Admin only
+
+**Example body:**
 
 ```json
 {
@@ -1095,7 +1663,7 @@ Request body example:
 }
 ```
 
-Allowed fields:
+**Allowed fields:**
 
 - `role`
 - `username`
@@ -1105,63 +1673,120 @@ Allowed fields:
 - `subscription_status`
 - `premium_until`
 
-If password is updated, it is hashed before being stored.
-
-### Delete User
+**Internal flow:**
 
 ```txt
-DELETE /api/users/:id
+authenticate admin
+   ↓
+authorize admin role
+   ↓
+validate user id
+   ↓
+validate body
+   ↓
+if email changes, check duplicate email
+   ↓
+if password changes, hash password
+   ↓
+update user
+   ↓
+return updated user without password
 ```
 
-Access: Admin only
-
-When a user is deleted, related reviews and watchlist items are also deleted.
+**What it is for:** Admin can correct user data, top up wallet, change role, or manually adjust premium status.
 
 ---
 
-## Review Endpoints
+### 13.24 `DELETE /api/users/:id`
 
-Review CRUD allows users to give ratings and comments to anime.
+**Purpose:** Delete a user.
 
-### Get Reviews by Anime
+**Access:** Admin only
 
-```txt
-GET /api/reviews/anime/:animeId
-```
-
-Access: Public
-
-Returns all reviews for one anime, including summary data:
-
-```json
-{
-  "summary": {
-    "totalReviews": 1,
-    "averageRating": 5
-  },
-  "data": []
-}
-```
-
-### Get My Reviews
+**Internal flow:**
 
 ```txt
-GET /api/reviews/my
+authenticate admin
+   ↓
+authorize admin role
+   ↓
+validate user id
+   ↓
+delete user
+   ↓
+delete user's reviews
+   ↓
+delete user's watchlist rows
+   ↓
+return success message
 ```
 
-Access: Logged-in user
+**Why related data is deleted:** If user is deleted, their reviews and watchlist items should not stay as orphan data.
 
-Returns reviews created by the currently logged-in user.
+---
 
-### Create Review
+### 13.25 `GET /api/reviews/anime/:animeId`
+
+**Purpose:** Get reviews for one anime.
+
+**Access:** Public
+
+**Response includes:**
+
+- Total review count
+- Average rating
+- Review list
+- User data without password
+
+**Internal flow:**
 
 ```txt
-POST /api/reviews
+validate anime id
+   ↓
+find reviews by anime_id
+   ↓
+lookup user data
+   ↓
+hide user password
+   ↓
+calculate totalReviews and averageRating
+   ↓
+return summary and data
 ```
 
-Access: Logged-in user
+**What it is for:** Display anime review section on an anime detail page.
 
-Request body:
+---
+
+### 13.26 `GET /api/reviews/my`
+
+**Purpose:** Get reviews created by the logged-in user.
+
+**Access:** Logged-in user
+
+**Internal flow:**
+
+```txt
+authenticate token
+   ↓
+read user id from token
+   ↓
+find reviews by user_id
+   ↓
+lookup anime data
+   ↓
+return user's reviews
+```
+
+---
+
+### 13.27 `POST /api/reviews`
+
+**Purpose:** Create a review for an anime.
+
+**Access:** Logged-in user
+
+**Request body:**
 
 ```json
 {
@@ -1171,22 +1796,38 @@ Request body:
 }
 ```
 
-Rules:
+**Rules:**
 
-- `rating` must be between `1` and `5`.
-- `anime_id` must be valid.
-- The anime must exist.
+- `anime_id` must be a valid ObjectId.
+- Anime must exist.
+- `rating` must be between 1 and 5.
 - One user can only review the same anime once.
 
-### Update Review
+**Internal flow:**
 
 ```txt
-PUT /api/reviews/:id
+authenticate token
+   ↓
+validate body
+   ↓
+check anime exists
+   ↓
+check duplicate review
+   ↓
+insert review
+   ↓
+return created review
 ```
 
-Access: Review owner or admin
+---
 
-Request body:
+### 13.28 `PUT /api/reviews/:id`
+
+**Purpose:** Update a review.
+
+**Access:** Review owner or admin
+
+**Example body:**
 
 ```json
 {
@@ -1195,41 +1836,81 @@ Request body:
 }
 ```
 
-### Delete Review
+**Internal flow:**
 
 ```txt
-DELETE /api/reviews/:id
+authenticate token
+   ↓
+validate review id
+   ↓
+find review
+   ↓
+check if requester is owner or admin
+   ↓
+validate body
+   ↓
+update review
+   ↓
+return updated review
 ```
-
-Access: Review owner or admin
-
-Deletes the review.
 
 ---
 
-## Watchlist Endpoints
+### 13.29 `DELETE /api/reviews/:id`
 
-Watchlist CRUD allows users to save anime and track their watching progress.
+**Purpose:** Delete a review.
 
-### Get My Watchlist
+**Access:** Review owner or admin
 
-```txt
-GET /api/watchlist
-```
-
-Access: Logged-in user
-
-Returns the watchlist of the currently logged-in user with anime details.
-
-### Add Anime to Watchlist
+**Internal flow:**
 
 ```txt
-POST /api/watchlist
+authenticate token
+   ↓
+validate review id
+   ↓
+find review
+   ↓
+check if requester is owner or admin
+   ↓
+delete review
+   ↓
+return success message
 ```
 
-Access: Logged-in user
+---
 
-Request body:
+### 13.30 `GET /api/watchlist`
+
+**Purpose:** Get logged-in user's watchlist.
+
+**Access:** Logged-in user
+
+**Internal flow:**
+
+```txt
+authenticate token
+   ↓
+read user id from token
+   ↓
+find watchlist items by user_id
+   ↓
+lookup anime data
+   ↓
+return watchlist
+```
+
+**What it is for:** Display a user's saved anime list.
+
+---
+
+### 13.31 `POST /api/watchlist`
+
+**Purpose:** Add anime to logged-in user's watchlist.
+
+**Access:** Logged-in user
+
+**Request body:**
 
 ```json
 {
@@ -1238,27 +1919,38 @@ Request body:
 }
 ```
 
-Allowed status values:
+**Allowed statuses:**
 
 - `plan_to_watch`
 - `watching`
 - `completed`
 - `dropped`
 
-Rules:
-
-- The anime must exist.
-- The same anime cannot be added twice by the same user.
-
-### Update Watchlist Item
+**Internal flow:**
 
 ```txt
-PUT /api/watchlist/:id
+authenticate token
+   ↓
+validate body
+   ↓
+check anime exists
+   ↓
+check duplicate watchlist item
+   ↓
+insert watchlist item
+   ↓
+return created item
 ```
 
-Access: Watchlist owner or admin
+---
 
-Request body:
+### 13.32 `PUT /api/watchlist/:id`
+
+**Purpose:** Update watchlist status.
+
+**Access:** Watchlist owner or admin
+
+**Request body:**
 
 ```json
 {
@@ -1266,138 +1958,310 @@ Request body:
 }
 ```
 
-### Delete Watchlist Item
+**Internal flow:**
 
 ```txt
-DELETE /api/watchlist/:id
+authenticate token
+   ↓
+validate watchlist id
+   ↓
+find watchlist item
+   ↓
+check if requester is owner or admin
+   ↓
+validate status
+   ↓
+update status
+   ↓
+return updated item
 ```
-
-Access: Watchlist owner or admin
-
-Deletes one anime from the user's watchlist.
 
 ---
 
-## CRUD Explanation
+### 13.33 `DELETE /api/watchlist/:id`
 
-This project contains multiple CRUD modules.
+**Purpose:** Remove anime from watchlist.
 
-### 1. Anime CRUD
+**Access:** Watchlist owner or admin
 
-Anime CRUD is used by admin to manage anime content.
+**Internal flow:**
 
-| Operation | Endpoint                               | Explanation        |
-| --------- | -------------------------------------- | ------------------ |
-| Create    | `POST /api/anime`                      | Add new anime.     |
-| Read      | `GET /api/anime`, `GET /api/anime/:id` | View anime data.   |
-| Update    | `PUT /api/anime/:id`                   | Edit anime data.   |
-| Delete    | `DELETE /api/anime/:id`                | Remove anime data. |
+```txt
+authenticate token
+   ↓
+validate watchlist id
+   ↓
+find watchlist item
+   ↓
+check if requester is owner or admin
+   ↓
+delete item
+   ↓
+return success message
+```
 
-### 2. Subscription Plan CRUD
+---
 
-Subscription Plan CRUD is used by admin to manage available premium plans.
+## 14. CRUD Modules Explanation
 
-| Operation | Endpoint                                               | Explanation                |
-| --------- | ------------------------------------------------------ | -------------------------- |
-| Create    | `POST /api/subscriptions`                              | Add new subscription plan. |
-| Read      | `GET /api/subscriptions`, `GET /api/subscriptions/:id` | View plans.                |
-| Update    | `PUT /api/subscriptions/:id`                           | Edit plan data.            |
-| Delete    | `DELETE /api/subscriptions/:id`                        | Remove plan.               |
+This project contains several CRUD modules. CRUD means:
 
-### 3. Review CRUD
+| Letter | Meaning | HTTP Method Usually Used |
+| ------ | ------- | ------------------------ |
+| C      | Create  | `POST`                   |
+| R      | Read    | `GET`                    |
+| U      | Update  | `PUT`                    |
+| D      | Delete  | `DELETE`                 |
+
+### 14.1 Anime CRUD
+
+Anime CRUD is used by admin to manage the anime catalog.
+
+| CRUD   | Endpoint                               | Purpose            |
+| ------ | -------------------------------------- | ------------------ |
+| Create | `POST /api/anime`                      | Add a new anime.   |
+| Read   | `GET /api/anime`, `GET /api/anime/:id` | View anime data.   |
+| Update | `PUT /api/anime/:id`                   | Edit anime data.   |
+| Delete | `DELETE /api/anime/:id`                | Remove anime data. |
+
+### 14.2 Subscription Plan CRUD
+
+Subscription CRUD is used by admin to manage premium packages.
+
+| CRUD   | Endpoint                                               | Purpose                    |
+| ------ | ------------------------------------------------------ | -------------------------- |
+| Create | `POST /api/subscriptions`                              | Add a new premium package. |
+| Read   | `GET /api/subscriptions`, `GET /api/subscriptions/:id` | View plans.                |
+| Update | `PUT /api/subscriptions/:id`                           | Edit plan data.            |
+| Delete | `DELETE /api/subscriptions/:id`                        | Remove plan.               |
+
+### 14.3 Review CRUD
 
 Review CRUD is used by users to rate and comment on anime.
 
-| Operation | Endpoint                                                 | Explanation    |
-| --------- | -------------------------------------------------------- | -------------- |
-| Create    | `POST /api/reviews`                                      | Add review.    |
-| Read      | `GET /api/reviews/anime/:animeId`, `GET /api/reviews/my` | View reviews.  |
-| Update    | `PUT /api/reviews/:id`                                   | Edit review.   |
-| Delete    | `DELETE /api/reviews/:id`                                | Delete review. |
+| CRUD   | Endpoint                                                 | Purpose                               |
+| ------ | -------------------------------------------------------- | ------------------------------------- |
+| Create | `POST /api/reviews`                                      | Create a review.                      |
+| Read   | `GET /api/reviews/anime/:animeId`, `GET /api/reviews/my` | Read anime reviews or user's reviews. |
+| Update | `PUT /api/reviews/:id`                                   | Update a review.                      |
+| Delete | `DELETE /api/reviews/:id`                                | Delete a review.                      |
 
-### 4. Watchlist CRUD
+### 14.4 Watchlist CRUD
 
 Watchlist CRUD is used by users to manage saved anime.
 
-| Operation | Endpoint                    | Explanation                  |
-| --------- | --------------------------- | ---------------------------- |
-| Create    | `POST /api/watchlist`       | Add anime to watchlist.      |
-| Read      | `GET /api/watchlist`        | View personal watchlist.     |
-| Update    | `PUT /api/watchlist/:id`    | Update watch status.         |
-| Delete    | `DELETE /api/watchlist/:id` | Remove anime from watchlist. |
+| CRUD   | Endpoint                    | Purpose                      |
+| ------ | --------------------------- | ---------------------------- |
+| Create | `POST /api/watchlist`       | Add anime to watchlist.      |
+| Read   | `GET /api/watchlist`        | View personal watchlist.     |
+| Update | `PUT /api/watchlist/:id`    | Update watching status.      |
+| Delete | `DELETE /api/watchlist/:id` | Remove anime from watchlist. |
+
+### 14.5 User CRUD
+
+User CRUD is admin-only. It is used for user management.
+
+| CRUD   | Endpoint                               | Purpose             |
+| ------ | -------------------------------------- | ------------------- |
+| Read   | `GET /api/users`, `GET /api/users/:id` | View user accounts. |
+| Update | `PUT /api/users/:id`                   | Edit user data.     |
+| Delete | `DELETE /api/users/:id`                | Remove a user.      |
+
+User create is done through `POST /api/auth/register`, not under `/api/users`.
+
+### 14.6 Transaction CRUD
+
+Transaction endpoints handle purchases and admin transaction management.
+
+| CRUD   | Endpoint                                                 | Purpose                           |
+| ------ | -------------------------------------------------------- | --------------------------------- |
+| Create | `POST /api/transactions/purchase`                        | Create a purchase transaction.    |
+| Read   | `GET /api/transactions/history`, `GET /api/transactions` | View own or all transactions.     |
+| Update | `PUT /api/transactions/:id`                              | Admin updates transaction status. |
+| Delete | `DELETE /api/transactions/:id`                           | Admin deletes transaction record. |
 
 ---
 
-## Business Logic Explanation
+## 15. Business Logic Explanation
 
-### Premium Subscription Logic
+### 15.1 Premium subscription logic
 
-The project uses `subscription_status` and `premium_until` to determine premium access.
-
-A user is considered premium if:
+A user is premium only when both conditions are true:
 
 ```txt
 subscription_status = "premium"
-AND premium_until is later than the current date
+premium_until > current date
 ```
 
-If the user tries to watch premium anime but their premium date is expired, the system automatically changes them back to:
+If the user has `subscription_status = "premium"` but `premium_until` is already expired, the API changes the user back to:
 
 ```txt
 subscription_status = "basic"
 premium_until = null
 ```
 
-### Wallet Payment Logic
+This check happens when the user tries to watch premium anime.
 
-When the user buys a plan using `Wallet`:
+### 15.2 Free anime vs premium anime
 
-1. The system checks whether the user's wallet balance is enough.
-2. If enough, the plan price is deducted from the wallet.
-3. The subscription is activated immediately.
-4. The invoice status becomes `Success`.
+Each anime has an `isPremium` field.
 
-### Non-Wallet Payment Logic
+| `isPremium` | Meaning                                                |
+| ----------- | ------------------------------------------------------ |
+| `false`     | Logged-in user can watch without premium subscription. |
+| `true`      | User must have active premium subscription.            |
 
-When the user buys a plan using `e-wallet`, `credit_card`, or `bank_transfer`:
+### 15.3 Wallet payment logic
 
-1. The system creates an invoice.
-2. The invoice status becomes `Pending`.
-3. Admin must update the transaction to `Success`.
-4. When updated to `Success`, the user's premium subscription is activated.
-
-### Premium Extension Logic
-
-If a premium user buys another plan before the old premium expires, the new duration is added after the current `premium_until` date instead of replacing it.
-
-Example:
+Wallet payment is immediate.
 
 ```txt
-Current premium_until: 2026-08-01
-Bought 30-day plan
-New premium_until: 2026-08-31
+User chooses Wallet
+   ↓
+System checks wallet balance
+   ↓
+If balance is enough, deduct price
+   ↓
+Activate premium
+   ↓
+Create invoice with Success status
+```
+
+If wallet balance is not enough, the API returns an error and does not create a successful transaction.
+
+### 15.4 Non-wallet payment logic
+
+Non-wallet payment is simulated as pending.
+
+```txt
+User chooses bank_transfer / credit_card / e-wallet
+   ↓
+System creates invoice with Pending status
+   ↓
+Admin manually confirms later
+   ↓
+When admin sets status to Success, premium is activated
+```
+
+### 15.5 Premium extension logic
+
+The function `calculatePremiumUntil` is used to calculate the new premium end date.
+
+If the user is currently premium:
+
+```txt
+new premium date = current premium_until + plan duration
+```
+
+If the user is not currently premium:
+
+```txt
+new premium date = today + plan duration
+```
+
+### 15.6 Duplicate review prevention
+
+The same user cannot review the same anime twice. This keeps rating data cleaner.
+
+```txt
+user_id + anime_id must be unique logically
+```
+
+If the user wants to change the review, they should use `PUT /api/reviews/:id`.
+
+### 15.7 Duplicate watchlist prevention
+
+The same user cannot add the same anime twice to the watchlist. If the user wants to change progress, they should update the existing item.
+
+---
+
+## 16. Middleware Flow
+
+Middleware is code that runs before the controller.
+
+### 16.1 `authenticate`
+
+Used for protected routes.
+
+```txt
+read Authorization header
+   ↓
+extract Bearer token
+   ↓
+verify token using JWT_SECRET
+   ↓
+store decoded user in req.user
+   ↓
+continue to next middleware/controller
+```
+
+If token is missing or invalid, returns `401 Unauthorized`.
+
+### 16.2 `authorize(["admin"])`
+
+Used for admin-only routes.
+
+```txt
+check req.user.role
+   ↓
+if role is admin, continue
+   ↓
+if not admin, return 403
+```
+
+### 16.3 `validate(schema)`
+
+Used to validate request bodies.
+
+```txt
+receive req.body
+   ↓
+validate with Joi schema
+   ↓
+convert strings to numbers/booleans when possible
+   ↓
+remove unknown fields
+   ↓
+continue to controller
+```
+
+### 16.4 `upload.single("coverImage")`
+
+Used for anime image upload.
+
+```txt
+read multipart/form-data
+   ↓
+check file type
+   ↓
+check file size
+   ↓
+save file to uploads folder
+   ↓
+store file info in req.file
 ```
 
 ---
 
-## Validation Rules
+## 17. Validation Rules
 
-Validation is handled using Joi middleware.
+### 17.1 Register validation
 
-### Auth Validation
+| Field      | Rule                                 |
+| ---------- | ------------------------------------ |
+| `username` | Required, minimum 3 characters.      |
+| `email`    | Required, valid email.               |
+| `password` | Required, minimum 6 characters.      |
+| `role`     | Optional, must be `user` or `admin`. |
 
-Register requires:
+### 17.2 Login validation
 
-- `username`
-- `email`
-- `password`
+| Field      | Rule                   |
+| ---------- | ---------------------- |
+| `email`    | Required, valid email. |
+| `password` | Required.              |
 
-Login requires:
-
-- `email`
-- `password`
-
-### Anime Validation
+### 17.3 Anime validation
 
 Create anime requires:
 
@@ -1410,7 +2274,7 @@ Optional fields:
 - `isPremium`
 - `type`
 
-### Subscription Validation
+### 17.4 Subscription validation
 
 Create subscription requires:
 
@@ -1418,22 +2282,36 @@ Create subscription requires:
 - `price`
 - `duration_days`
 
-### Review Validation
+### 17.5 Transaction validation
+
+Purchase requires:
+
+- `planId`
+- `paymentMethod`
+
+Allowed payment methods:
+
+- `Wallet`
+- `e-wallet`
+- `credit_card`
+- `bank_transfer`
+
+### 17.6 Review validation
 
 Create review requires:
 
 - `anime_id`
 - `rating`
 
-Rating must be from `1` to `5`.
+Rating must be an integer from `1` to `5`.
 
-### Watchlist Validation
+### 17.7 Watchlist validation
 
-Create watchlist item requires:
+Create watchlist requires:
 
 - `anime_id`
 
-Status must be one of:
+Allowed statuses:
 
 - `plan_to_watch`
 - `watching`
@@ -1442,24 +2320,24 @@ Status must be one of:
 
 ---
 
-## File Upload Rules
+## 18. File Upload Rules
 
 Anime cover image upload uses multer.
 
-Allowed image extensions:
+Allowed file extensions:
 
 - `.jpeg`
 - `.jpg`
 - `.png`
 - `.webp`
 
-Maximum file size:
+Maximum size:
 
 ```txt
 5 MB
 ```
 
-Uploaded files are stored inside:
+Uploaded files are stored in:
 
 ```txt
 uploads/
@@ -1471,19 +2349,141 @@ Uploaded files can be accessed through:
 /uploads/filename.jpg
 ```
 
+Example:
+
+```txt
+http://localhost:3000/uploads/one-piece-1783064070109.jpeg
+```
+
 ---
 
-## Example Testing Flow
+## 19. Postman Collection Testing
 
-This is a recommended flow for testing in Postman. You can test manually or use the included Postman collection `wawa.json` to automate most of this flow.
+The project includes a complete Postman collection:
 
-### 1. Run seed
+```txt
+wawa.json
+```
+
+The collection is named:
+
+```txt
+Anime Subscription API - Complete Endpoint Testing
+```
+
+It is prepared to test:
+
+- Root endpoint
+- Auth register and login
+- Anime CRUD
+- Jikan API search
+- Watch anime access check
+- Subscription CRUD
+- Transaction purchase and admin confirmation
+- User admin endpoints
+- Review CRUD
+- Watchlist CRUD
+- Cleanup/delete endpoints
+
+### 19.1 Before importing the collection
+
+Install dependencies, configure `.env`, seed the database, and start the server.
+
+```bash
+npm install
+cp .env.example .env
+npm run seed
+npm start
+```
+
+The collection assumes the API is running at:
+
+```txt
+http://localhost:3000
+```
+
+If your server uses a different port, update the `base_url` variable in Postman.
+
+### 19.2 How to import
+
+1. Open Postman.
+2. Click **Import**.
+3. Choose `wawa.json`.
+4. Open the imported collection.
+5. Check the **Variables** tab.
+6. Make sure `base_url` is `http://localhost:3000`.
+7. Save the collection.
+
+### 19.3 Collection variables
+
+| Variable                  | Purpose                                 |
+| ------------------------- | --------------------------------------- |
+| `base_url`                | Base API URL.                           |
+| `admin_email`             | Seeded admin email.                     |
+| `user_email`              | Seeded user email.                      |
+| `test_password`           | Seeded password.                        |
+| `admin_token`             | Saved after admin login.                |
+| `user_token`              | Saved after user login.                 |
+| `anime_id`                | Saved anime ID for testing.             |
+| `created_anime_id`        | Anime ID created by collection test.    |
+| `premium_anime_id`        | Premium anime ID for watch access test. |
+| `subscription_id`         | Subscription plan ID.                   |
+| `created_subscription_id` | Plan ID created by collection test.     |
+| `transaction_id`          | Transaction ID.                         |
+| `created_transaction_id`  | Transaction created by purchase test.   |
+| `review_id`               | Review ID created by test.              |
+| `watchlist_id`            | Watchlist ID created by test.           |
+
+### 19.4 Recommended Postman run order
+
+Run the folders in this order:
+
+| Order | Folder                                | Purpose                                           |
+| ----: | ------------------------------------- | ------------------------------------------------- |
+|     1 | `00. Health Check`                    | Confirms the server is running.                   |
+|     2 | `01. Auth`                            | Registers test user and logs in admin/user.       |
+|     3 | `02. Load Seed Data IDs`              | Saves important IDs into variables.               |
+|     4 | `03. Anime Endpoints`                 | Tests anime routes.                               |
+|     5 | `04. Subscription Plan Endpoints`     | Tests subscription routes.                        |
+|     6 | `05. Transaction Endpoints`           | Tests purchase/history/admin transaction routes.  |
+|     7 | `06. Review Endpoints`                | Tests review CRUD.                                |
+|     8 | `07. Watchlist Endpoints`             | Tests watchlist CRUD.                             |
+|     9 | `08. User Endpoints (Admin)`          | Tests user management.                            |
+|    10 | `09. Cleanup / Delete Endpoint Tests` | Tests delete endpoints and cleans temporary data. |
+
+### 19.5 Testing image upload in Postman
+
+The anime create/update requests use `multipart/form-data`.
+
+By default, the `coverImage` row may be disabled so the request can run without a local file. To test upload:
+
+1. Open `Create Anime (Admin) - Save Created Anime ID`.
+2. Go to **Body**.
+3. Choose **form-data**.
+4. Enable the `coverImage` row.
+5. Select an image from your computer.
+6. Send the request.
+
+---
+
+## 20. Recommended Manual Testing Flow
+
+Use this flow if you want to test without the full collection runner.
+
+### Step 1: Seed and start
 
 ```bash
 npm run seed
+npm start
 ```
 
-### 2. Login as admin
+### Step 2: Check server
+
+```txt
+GET /
+```
+
+### Step 3: Login as admin
 
 ```txt
 POST /api/auth/login
@@ -1498,17 +2498,9 @@ Body:
 }
 ```
 
-Copy the admin token.
+Copy `token` as `admin_token`.
 
-### 3. Create anime as admin
-
-```txt
-POST /api/anime
-```
-
-Use `multipart/form-data` and include admin token.
-
-### 4. Login as normal user
+### Step 4: Login as user
 
 ```txt
 POST /api/auth/login
@@ -1523,20 +2515,29 @@ Body:
 }
 ```
 
-Copy the user token.
+Copy `token` as `user_token`.
 
-### 5. Get subscription plans
+### Step 5: Get anime list
+
+```txt
+GET /api/anime
+```
+
+Copy one anime `_id`.
+
+### Step 6: Get subscription plans
 
 ```txt
 GET /api/subscriptions
 ```
 
-Copy one plan ID.
+Copy one plan `_id`.
 
-### 6. Buy subscription
+### Step 7: Buy subscription
 
 ```txt
 POST /api/transactions/purchase
+Authorization: Bearer <user_token>
 ```
 
 Body:
@@ -1548,18 +2549,18 @@ Body:
 }
 ```
 
-### 7. Watch premium anime
+### Step 8: Watch anime
 
 ```txt
 GET /api/anime/:id/watch
+Authorization: Bearer <user_token>
 ```
 
-Use the user token.
-
-### 8. Create review
+### Step 9: Create review
 
 ```txt
 POST /api/reviews
+Authorization: Bearer <user_token>
 ```
 
 Body:
@@ -1572,10 +2573,11 @@ Body:
 }
 ```
 
-### 9. Add anime to watchlist
+### Step 10: Add to watchlist
 
 ```txt
 POST /api/watchlist
+Authorization: Bearer <user_token>
 ```
 
 Body:
@@ -1587,50 +2589,114 @@ Body:
 }
 ```
 
+### Step 11: Test admin CRUD
+
+Use `admin_token` to test:
+
+```txt
+POST /api/anime
+PUT /api/anime/:id
+DELETE /api/anime/:id
+POST /api/subscriptions
+PUT /api/subscriptions/:id
+DELETE /api/subscriptions/:id
+GET /api/users
+GET /api/transactions
+```
+
 ---
 
-## Important Fixes in This Version
+## 21. Common Response Status Codes
 
-This version contains fixes and improvements compared to the previous code:
+|                      Status | Meaning                                   | Example Situation                                     |
+| --------------------------: | ----------------------------------------- | ----------------------------------------------------- |
+|                    `200 OK` | Request successful.                       | Login, get list, update, delete.                      |
+|               `201 Created` | New data created.                         | Register, create anime, create review, purchase.      |
+|           `400 Bad Request` | Invalid input.                            | Invalid ObjectId, validation error, duplicate review. |
+|          `401 Unauthorized` | Missing or invalid token.                 | Protected route without token.                        |
+|             `403 Forbidden` | Token valid, but role/access not allowed. | Normal user accesses admin endpoint.                  |
+|             `404 Not Found` | Requested data does not exist.            | Anime ID not found.                                   |
+| `500 Internal Server Error` | Server/database error.                    | Unexpected backend error.                             |
+|           `502 Bad Gateway` | External API call failed.                 | Jikan API request failed.                             |
 
-1. Fixed the typo `proccess.env.MONGO_URI` to `process.env.MONGO_URI`.
+---
+
+## 22. Important Fixes in This Version
+
+This version includes fixes and improvements:
+
+1. Fixed `proccess.env.MONGO_URI` to `process.env.MONGO_URI`.
 2. Added fallback port using `process.env.PORT || 3000`.
 3. Added required checks for `MONGO_URI` and `JWT_SECRET`.
-4. Added ObjectId validation to prevent MongoDB ObjectId errors.
-5. Improved anime validation for create and update operations.
-6. Improved boolean and number conversion from request bodies.
-7. Prevented user password from being returned in user endpoints.
-8. Added `GET /api/users/:id` endpoint.
-9. Added `GET /api/subscriptions/:id` endpoint.
+4. Added MongoDB ObjectId validation.
+5. Improved anime create/update validation.
+6. Improved type conversion for numbers and booleans from request bodies.
+7. Prevented user passwords from being returned in user endpoints.
+8. Added `GET /api/users/:id`.
+9. Added `GET /api/subscriptions/:id`.
 10. Added Review CRUD.
 11. Added Watchlist CRUD.
 12. Added cleanup logic when anime or users are deleted.
-13. Fixed transaction flow for wallet and pending payment methods.
+13. Fixed transaction logic for wallet and pending payment methods.
 14. Added premium extension logic.
-15. Removed hardcoded database connection from the seeder.
-16. Added `.env.example` for easier setup.
+15. Removed hardcoded MongoDB URI from seeder.
+16. Added `.env.example`.
+17. Updated Postman collection to test all endpoints.
+18. Expanded README with detailed endpoint and program flow explanations.
 
 ---
 
-## Possible Future Improvements
+## 23. Possible Future Improvements
 
-This project can be improved further by adding:
+This project can be improved further with:
 
-1. Episode CRUD for managing individual anime episodes.
+1. Episode CRUD for individual anime episodes.
 2. Real video URL storage instead of fake watch URLs.
 3. Payment gateway integration.
 4. User profile endpoint for users to update their own profile.
 5. Refresh token system.
-6. Pagination for anime, reviews, watchlist, and transactions.
-7. Search and filter for local anime database.
+6. Pagination for anime, reviews, watchlists, users, and transactions.
+7. Search/filter/sort for local anime database.
 8. Cloud image upload using Cloudinary or similar services.
-9. Unit testing and integration testing.
-10. API documentation using Swagger/OpenAPI.
+9. Soft delete for important records.
+10. Swagger/OpenAPI documentation.
+11. Unit and integration tests.
+12. Stronger production security for admin registration.
 
 ---
 
-## Conclusion
+## 24. Conclusion
 
-Anime Subscription API is a backend project for an anime streaming subscription platform. It includes authentication, authorization, anime management, subscription plans, transactions, premium access checks, reviews, watchlists, file uploads, third-party API integration, and database seeding.
+Anime Subscription API is a backend web service for an anime streaming subscription platform. It demonstrates many important backend concepts:
 
-The project is suitable for demonstrating REST API development, CRUD implementation, authentication, database design, and backend business logic using Node.js, Express.js, and MongoDB.
+- REST API design
+- CRUD operations
+- Authentication using JWT
+- Role-based authorization
+- MongoDB database operations
+- Request validation
+- File upload
+- Third-party API integration
+- Transaction and subscription business logic
+- User-generated reviews
+- Personal watchlist management
+
+The main program flow is simple:
+
+```txt
+User registers/logs in
+   ↓
+User browses anime and subscription plans
+   ↓
+User buys premium subscription
+   ↓
+System activates premium access
+   ↓
+User can watch premium anime
+   ↓
+User can review anime and manage watchlist
+   ↓
+Admin manages anime, plans, users, and transactions
+```
+
+This makes the project suitable for demonstrating a complete Express.js and MongoDB REST API with multiple CRUD modules and realistic backend logic.
