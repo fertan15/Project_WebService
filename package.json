@@ -1,4 +1,12 @@
 {
+  "name": "anime-subscription-api",
+  "version": "1.0.0",
+  "description": "Anime subscription REST API with auth, anime CRUD, subscription CRUD, review CRUD, and watchlist CRUD.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "seed": "node src/config/db.js"
+  },
   "dependencies": {
     "@faker-js/faker": "^10.5.0",
     "axios": "^1.18.1",

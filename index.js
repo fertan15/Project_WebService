@@ -1,36 +1,72 @@
 require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
+const path = require("path");
 
-// Import Routes
 const routes = require("./src/routes");
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
+const MONGO_URI = process.env.MONGO_URI;
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// Middleware untuk menyajikan folder uploads agar gambar bisa diakses publik via URL
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Setup Routes
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Anime Subscription API is running",
+    routes: {
+      auth: "/api/auth",
+      anime: "/api/anime",
+      subscriptions: "/api/subscriptions",
+      transactions: "/api/transactions",
+      users: "/api/users",
+      reviews: "/api/reviews",
+      watchlist: "/api/watchlist",
+    },
+  });
+});
+
 app.use("/api", routes);
 
-// Konek ke MongoDB via Mongoose
-const MONGO_URI =
-  "mongodb://bontrex_db_user:FB32HpAtG1BaX4tL@ac-q2f8wyg-shard-00-00.ohzcpfe.mongodb.net:27017,ac-q2f8wyg-shard-00-01.ohzcpfe.mongodb.net:27017,ac-q2f8wyg-shard-00-02.ohzcpfe.mongodb.net:27017/anime_subscription_db?ssl=true&replicaSet=atlas-z1t9kt-shard-0&authSource=admin";
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log(
-      "✅ Connected to MongoDB via Mongoose! Silakan cek di Compass.",
-    );
+app.use((err, req, res, next) => {
+  if (err && err.name === "MulterError") {
+    return res.status(400).json({ message: "Upload error", error: err.message });
+  }
+
+  if (err) {
+    return res.status(400).json({ message: err.message || "Bad request" });
+  }
+
+  next();
+});
+
+const startServer = async () => {
+  try {
+    if (!MONGO_URI) {
+      throw new Error("MONGO_URI belum diisi di file .env");
+    }
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET belum diisi di file .env");
+    }
+
+    await mongoose.connect(MONGO_URI);
+    console.log("✅ Connected to MongoDB via Mongoose! Silakan cek di Compass.");
+
     app.listen(PORT, () => {
       console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
     });
-  })
-  .catch((err) => {
-    console.error("❌ Gagal connect ke MongoDB:", err.message);
-  });
+  } catch (error) {
+    console.error("❌ Gagal menjalankan server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

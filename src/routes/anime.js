@@ -7,15 +7,18 @@ const {
   createAnime,
   updateAnime,
   deleteAnime,
-  watchAnime
+  watchAnime,
 } = require("../controllers/animeController");
 const { authenticate, authorize, upload, validate } = require("../middlewares");
-const { animeSchema } = require("../Schema/animeSchema");
+const { animeSchema, updateAnimeSchema } = require("../Schema/animeSchema");
 
-// 3rd Party API Endpoint (Public / Authenticated)
+// 3rd Party API Endpoint
 router.get("/jikan/search", searchFromJikan);
 
-// Local CRUD Master (Admin Only)
+// Watch Anime must be placed before /:id to avoid route confusion.
+router.get("/:id/watch", authenticate, watchAnime);
+
+// Local CRUD Master Anime
 router.get("/", getAllAnime);
 router.get("/:id", getAnimeById);
 router.post(
@@ -31,16 +34,9 @@ router.put(
   authenticate,
   authorize(["admin"]),
   upload.single("coverImage"),
+  validate(updateAnimeSchema),
   updateAnime,
 );
-router.delete(
-  "/:id",
-  authenticate,
-  authorize(["admin"]),
-  deleteAnime,
-);
-
-// Watch Anime (Authenticated, Premium Check)
-router.get("/:id/watch", authenticate, watchAnime);
+router.delete("/:id", authenticate, authorize(["admin"]), deleteAnime);
 
 module.exports = router;

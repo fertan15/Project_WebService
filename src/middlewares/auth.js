@@ -1,31 +1,28 @@
 const jwt = require("jsonwebtoken");
 
-// Authentication Middleware
 const authenticate = (req, res, next) => {
-  const token = req.header("Authorization")?.replace("Bearer ", "");
+  const authHeader = req.header("Authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : null;
+
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
+    return res.status(401).json({ message: "Access denied. No token provided." });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secretkey");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(400).json({ message: "Invalid token." });
+    res.status(401).json({ message: "Invalid or expired token." });
   }
 };
 
-// Authorization Middleware (Role Check)
 const authorize = (roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res
-        .status(403)
-        .json({ message: "Forbidden. You do not have permission." });
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Forbidden. You do not have permission." });
     }
+
     next();
   };
 };
