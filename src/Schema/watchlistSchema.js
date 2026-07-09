@@ -5,11 +5,15 @@ const watchStatuses = ["plan_to_watch", "watching", "completed", "dropped"];
 
 const createWatchlistSchema = Joi.object({
   anime_id: Joi.string().pattern(objectIdPattern).required(),
-  status: Joi.string().valid(...watchStatuses).default("plan_to_watch"),
+  status: Joi.string()
+    .valid(...watchStatuses)
+    .default("plan_to_watch"),
 });
 
 const updateWatchlistSchema = Joi.object({
-  status: Joi.string().valid(...watchStatuses).required(),
+  status: Joi.string()
+    .valid(...watchStatuses)
+    .required(),
 });
 
 module.exports = {
