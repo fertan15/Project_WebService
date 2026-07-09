@@ -14,18 +14,40 @@
             "method": "POST",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"admin\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "testuser",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "test@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
+                },
+                {
+                  "key": "role",
+                  "value": "admin",
+                  "type": "text"
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/auth/register",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "register"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
             }
           }
         },
@@ -49,18 +71,30 @@
             "method": "POST",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "test@example.com",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/auth/login",
-              "host": ["{{base_url}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           }
         }
@@ -76,8 +110,15 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/anime/jikan/search?q=naruto",
-              "host": ["{{base_url}}"],
-              "path": ["api", "anime", "jikan", "search"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "jikan",
+                "search"
+              ],
               "query": [
                 {
                   "key": "q",
@@ -94,8 +135,13 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/anime",
-              "host": ["{{base_url}}"],
-              "path": ["api", "anime"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime"
+              ]
             }
           }
         },
@@ -119,12 +165,12 @@
               "formdata": [
                 {
                   "key": "title",
-                  "value": "One Piece",
+                  "value": "wawa",
                   "type": "text"
                 },
                 {
                   "key": "synopsis",
-                  "value": "Mencari harta karun legendaris.",
+                  "value": "wawa",
                   "type": "text"
                 },
                 {
@@ -146,8 +192,13 @@
             },
             "url": {
               "raw": "{{base_url}}/api/anime",
-              "host": ["{{base_url}}"],
-              "path": ["api", "anime"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime"
+              ]
             }
           }
         },
@@ -178,8 +229,14 @@
             },
             "url": {
               "raw": "{{base_url}}/api/anime/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "anime", ":id"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                ":id"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -206,8 +263,49 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/anime/:id",
-              "host": ["{{base_url}}"],
-              "path": ["api", "anime", ":id"],
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ISI_DENGAN_ID_ANIME"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Watch Anime",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/:id/watch",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                ":id",
+                "watch"
+              ],
               "variable": [
                 {
                   "key": "id",
@@ -223,7 +321,7 @@
       "name": "3. Transactions",
       "item": [
         {
-          "name": "Purchase Premium Anime",
+          "name": "Purchase Premium",
           "request": {
             "auth": {
               "type": "bearer",
@@ -238,18 +336,30 @@
             "method": "POST",
             "header": [],
             "body": {
-              "mode": "raw",
-              "raw": "{\n    \"paymentMethod\": \"e-wallet\",\n    \"items\": [\n        {\n            \"animeId\": \"ISI_DENGAN_ID_ANIME_1\",\n            \"price\": 50000\n        },\n        {\n            \"animeId\": \"ISI_DENGAN_ID_ANIME_2\",\n            \"price\": 30000\n        }\n    ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "planId",
+                  "value": "ISI_DENGAN_ID_PLAN_1_BULAN_ATAU_3_BULAN_ATAU_1_TAHUN",
+                  "type": "text"
+                },
+                {
+                  "key": "paymentMethod",
+                  "value": "Wallet",
+                  "type": "text"
                 }
-              }
+              ]
             },
             "url": {
               "raw": "{{base_url}}/api/transactions/purchase",
-              "host": ["{{base_url}}"],
-              "path": ["api", "transactions", "purchase"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "purchase"
+              ]
             }
           }
         },
@@ -270,8 +380,371 @@
             "header": [],
             "url": {
               "raw": "{{base_url}}/api/transactions/history",
-              "host": ["{{base_url}}"],
-              "path": ["api", "transactions", "history"]
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "history"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Transactions (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/transactions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Transaction (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "status",
+                  "value": "Success",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transactions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "TRANSACTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Transaction (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/transactions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "TRANSACTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Users (Admin)",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User Role (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "role",
+                  "value": "admin",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/users/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Subscriptions (Admin)",
+      "item": [
+        {
+          "name": "Get All Subscriptions",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Subscription (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "plan_name",
+                  "value": "1 Month Extra",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "60000",
+                  "type": "text"
+                },
+                {
+                  "key": "duration_days",
+                  "value": "30",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Akses 30 hari + bonus",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Subscription (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "price",
+                  "value": "55000",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PLAN_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Subscription (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PLAN_ID_HERE"
+                }
+              ]
             }
           }
         }
