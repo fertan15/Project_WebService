@@ -1,0 +1,2060 @@
+{
+  "info": {
+    "name": "Anime Subscription API - Complete Endpoint Testing",
+    "_postman_id": "a55a17c1-0c9b-48d8-bdc1-9f09fcb65722",
+    "description": "Complete Postman collection for testing the Anime Subscription API. Run npm run seed and npm start before using. The collection stores tokens and IDs automatically in collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00. Health Check",
+      "item": [
+        {
+          "name": "Root - API is Running",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": []
+            },
+            "description": "Checks that the Express server is running."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01. Auth",
+      "description": "Register and login endpoints. Admin and user login requests save JWT tokens automatically.",
+      "item": [
+        {
+          "name": "Register Test User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Creates a temporary user for testing admin user CRUD. The generated user ID is saved as registered_user_id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman_user_{{$timestamp}}\",\n  \"email\": \"postman_user_{{$timestamp}}@example.com\",\n  \"password\": \"{{test_password}}\",\n  \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([201, 400]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "if (json.userId) { pm.collectionVariables.set('registered_user_id', json.userId); }",
+                  "pm.test('Register response contains a message', function () { pm.expect(json).to.have.property('message'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Admin - Save Admin Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in the seeded admin account and saves admin_token and admin_user_id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('Admin token exists', function () { pm.expect(json.token).to.be.a('string').and.not.empty; });",
+                  "if (json.token) { pm.collectionVariables.set('admin_token', json.token); }",
+                  "if (json.user && json.user.id) { pm.collectionVariables.set('admin_user_id', json.user.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login User - Save User Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in the seeded normal user account and saves user_token and user_id.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('User token exists', function () { pm.expect(json.token).to.be.a('string').and.not.empty; });",
+                  "if (json.token) { pm.collectionVariables.set('user_token', json.token); }",
+                  "if (json.user && json.user.id) { pm.collectionVariables.set('user_id', json.user.id); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02. Load Seed Data IDs",
+      "description": "Run this folder after login. It reads seeded data and saves reusable IDs for later requests.",
+      "item": [
+        {
+          "name": "Get All Anime - Save Anime IDs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime"
+              ]
+            },
+            "description": "Saves anime_id and premium_anime_id from seeded anime."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('Anime list is an array', function () { pm.expect(json).to.be.an('array'); });",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  const nonPremium = json.find(a => a && a.isPremium === false) || json[0];",
+                  "  const premium = json.find(a => a && a.isPremium === true);",
+                  "  if (nonPremium && nonPremium._id) { pm.collectionVariables.set('anime_id', nonPremium._id); }",
+                  "  if (premium && premium._id) { pm.collectionVariables.set('premium_anime_id', premium._id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Subscriptions - Save Plan ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            },
+            "description": "Saves subscription_id from seeded subscription plans. It prefers the 1 Month plan if available."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('Subscription list is an array', function () { pm.expect(json).to.be.an('array'); });",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  const plan = json.find(p => p.plan_name && p.plan_name.toLowerCase().includes('1 month')) || json[0];",
+                  "  if (plan && plan._id) { pm.collectionVariables.set('subscription_id', plan._id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Users - Save User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Admin-only request. Saves user_id from the normal seeded user if found.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('User list is an array', function () { pm.expect(json).to.be.an('array'); });",
+                  "if (Array.isArray(json) && json.length > 0) {",
+                  "  const normalUser = json.find(u => u.email === pm.collectionVariables.get('user_email')) || json.find(u => u.role === 'user') || json[0];",
+                  "  if (normalUser && normalUser._id) { pm.collectionVariables.set('user_id', normalUser._id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03. Anime Endpoints",
+      "description": "Public anime endpoints, Jikan integration, admin Anime CRUD, and watch access testing.",
+      "item": [
+        {
+          "name": "Search Jikan API",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/jikan/search?q=naruto",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "jikan",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "naruto"
+                }
+              ]
+            },
+            "description": "Searches anime from the Jikan public API."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Anime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime"
+              ]
+            },
+            "description": "Reads all local anime."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Anime by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/{{anime_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "{{anime_id}}"
+              ]
+            },
+            "description": "Reads one local anime by ID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Anime (Admin) - Save Created Anime ID",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime"
+              ]
+            },
+            "description": "Creates anime as admin. coverImage is optional and disabled by default.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Postman Test Anime {{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "synopsis",
+                  "value": "Anime created from Postman collection testing.",
+                  "type": "text"
+                },
+                {
+                  "key": "episodes",
+                  "value": "12",
+                  "type": "text"
+                },
+                {
+                  "key": "isPremium",
+                  "value": "false",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "TV",
+                  "type": "text"
+                },
+                {
+                  "key": "coverImage",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Optional: enable this field and choose an image file if you want to test upload."
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([201]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "const anime = json.data || {};",
+                  "pm.test('Created anime has an ID', function () { pm.expect(anime._id).to.be.a('string'); });",
+                  "if (anime._id) {",
+                  "  pm.collectionVariables.set('created_anime_id', anime._id);",
+                  "  pm.collectionVariables.set('anime_id', anime._id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Created Anime by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/{{created_anime_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "{{created_anime_id}}"
+              ]
+            },
+            "description": "Reads the anime created by this collection."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Created Anime (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/{{created_anime_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "{{created_anime_id}}"
+              ]
+            },
+            "description": "Updates the anime created by this collection.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Postman Test Anime Updated {{$timestamp}}",
+                  "type": "text"
+                },
+                {
+                  "key": "synopsis",
+                  "value": "Updated from Postman collection.",
+                  "type": "text"
+                },
+                {
+                  "key": "episodes",
+                  "value": "24",
+                  "type": "text"
+                },
+                {
+                  "key": "isPremium",
+                  "value": "true",
+                  "type": "text"
+                },
+                {
+                  "key": "type",
+                  "value": "OVA",
+                  "type": "text"
+                },
+                {
+                  "key": "coverImage",
+                  "type": "file",
+                  "src": [],
+                  "disabled": true,
+                  "description": "Optional replacement cover image."
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Watch Non-Premium or Created Anime (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/{{created_anime_id}}/watch",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "{{created_anime_id}}",
+                "watch"
+              ]
+            },
+            "description": "Tests watch access using user token.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Watch Seeded Premium Anime (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/{{premium_anime_id}}/watch",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "{{premium_anime_id}}",
+                "watch"
+              ]
+            },
+            "description": "Tests premium watch access. Seeded user is premium after npm run seed.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04. Subscription Plan Endpoints",
+      "description": "Public subscription read endpoints and admin Subscription CRUD.",
+      "item": [
+        {
+          "name": "Get All Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            },
+            "description": "Reads all subscription plans."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Subscription by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/{{subscription_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "{{subscription_id}}"
+              ]
+            },
+            "description": "Reads one subscription plan by ID."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Subscription (Admin) - Save Created Plan ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions"
+              ]
+            },
+            "description": "Creates a temporary subscription plan as admin.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Postman Trial Plan {{$timestamp}}\",\n  \"price\": 10000,\n  \"duration_days\": 7,\n  \"description\": \"Temporary plan created by Postman collection.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([201]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "const plan = json.data || {};",
+                  "pm.test('Created plan has an ID', function () { pm.expect(plan._id).to.be.a('string'); });",
+                  "if (plan._id) { pm.collectionVariables.set('created_subscription_id', plan._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Created Subscription by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/{{created_subscription_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "{{created_subscription_id}}"
+              ]
+            },
+            "description": "Reads the created subscription plan."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Created Subscription (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/{{created_subscription_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "{{created_subscription_id}}"
+              ]
+            },
+            "description": "Updates the temporary subscription plan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 12000,\n  \"duration_days\": 10,\n  \"description\": \"Updated by Postman collection.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05. Transaction Endpoints",
+      "description": "User purchase, user transaction history, and admin Transaction CRUD endpoints.",
+      "item": [
+        {
+          "name": "Purchase Premium with Wallet (User) - Save Transaction ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/purchase",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "purchase"
+              ]
+            },
+            "description": "Purchases a seeded subscription plan using the seeded user wallet. Saves transaction ID.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"planId\": \"{{subscription_id}}\",\n  \"paymentMethod\": \"Wallet\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([201]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('Transaction ID exists', function () { pm.expect(json.transactionId).to.be.a('string'); });",
+                  "if (json.transactionId) {",
+                  "  pm.collectionVariables.set('created_transaction_id', json.transactionId);",
+                  "  pm.collectionVariables.set('transaction_id', json.transactionId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Transaction History (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/history",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "history"
+              ]
+            },
+            "description": "Reads transaction history for the logged-in user.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Transactions (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions"
+              ]
+            },
+            "description": "Admin-only endpoint to read all transaction records.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "pm.test('Transaction list is an array', function () { pm.expect(json).to.be.an('array'); });",
+                  "if (Array.isArray(json) && json.length > 0 && !pm.collectionVariables.get('transaction_id')) {",
+                  "  if (json[0]._id) { pm.collectionVariables.set('transaction_id', json[0]._id); }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Transaction (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/{{created_transaction_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "{{created_transaction_id}}"
+              ]
+            },
+            "description": "Admin-only endpoint to update a transaction.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Success\",\n  \"payment_method\": \"Wallet\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06. Review Endpoints",
+      "description": "Review CRUD. This collection reviews the anime created earlier to avoid duplicate review errors on seeded data.",
+      "item": [
+        {
+          "name": "Get Reviews by Anime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/anime/{{anime_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "anime",
+                "{{anime_id}}"
+              ]
+            },
+            "description": "Public endpoint to read reviews and rating summary by anime."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Reviews (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/my",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "my"
+              ]
+            },
+            "description": "Reads current user reviews.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Review (User) - Save Review ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "Creates a review for the anime created by this collection.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anime_id\": \"{{created_anime_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Created from Postman collection.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([201]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "const review = json.data || {};",
+                  "pm.test('Review has an ID', function () { pm.expect(review._id).to.be.a('string'); });",
+                  "if (review._id) { pm.collectionVariables.set('review_id', review._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Reviews by Created Anime",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/anime/{{created_anime_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "anime",
+                "{{created_anime_id}}"
+              ]
+            },
+            "description": "Reads reviews for the created anime."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Review (Owner/User)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{review_id}}"
+              ]
+            },
+            "description": "Updates the review created by this collection.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updated review from Postman collection.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07. Watchlist Endpoints",
+      "description": "Watchlist CRUD for the logged-in user.",
+      "item": [
+        {
+          "name": "Get My Watchlist (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/watchlist",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "watchlist"
+              ]
+            },
+            "description": "Reads current user watchlist.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Add Anime to Watchlist (User) - Save Watchlist ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/watchlist",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "watchlist"
+              ]
+            },
+            "description": "Adds the anime created by this collection to the current user watchlist.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anime_id\": \"{{created_anime_id}}\",\n  \"status\": \"plan_to_watch\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([201]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "const item = json.data || {};",
+                  "pm.test('Watchlist item has an ID', function () { pm.expect(item._id).to.be.a('string'); });",
+                  "if (item._id) { pm.collectionVariables.set('watchlist_id', item._id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get My Watchlist After Add (User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/watchlist",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "watchlist"
+              ]
+            },
+            "description": "Confirms watchlist data after create.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Watchlist Item (Owner/User)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/watchlist/{{watchlist_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "watchlist",
+                "{{watchlist_id}}"
+              ]
+            },
+            "description": "Updates the status of the watchlist item created by this collection.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08. User Endpoints (Admin)",
+      "description": "Admin-only user management endpoints. Uses the temporary user created in Auth folder.",
+      "item": [
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Reads all users without passwords.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Registered User by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{registered_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{registered_user_id}}"
+              ]
+            },
+            "description": "Reads the temporary registered user.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Registered User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{registered_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{registered_user_id}}"
+              ]
+            },
+            "description": "Updates the temporary registered user.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman_user_updated\",\n  \"wallet\": 250000,\n  \"subscription_status\": \"basic\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09. Cleanup / Delete Endpoint Tests",
+      "description": "Run at the end to test DELETE endpoints and remove temporary data created by the collection.",
+      "item": [
+        {
+          "name": "Delete Review (Owner/User)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{review_id}}"
+              ]
+            },
+            "description": "Deletes the temporary review.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Watchlist Item (Owner/User)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/watchlist/{{watchlist_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "watchlist",
+                "{{watchlist_id}}"
+              ]
+            },
+            "description": "Deletes the temporary watchlist item.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Transaction (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/{{created_transaction_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "transactions",
+                "{{created_transaction_id}}"
+              ]
+            },
+            "description": "Deletes the temporary transaction.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Created Anime (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/anime/{{created_anime_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "anime",
+                "{{created_anime_id}}"
+              ]
+            },
+            "description": "Deletes the temporary anime.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Created Subscription (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscriptions/{{created_subscription_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscriptions",
+                "{{created_subscription_id}}"
+              ]
+            },
+            "description": "Deletes the temporary subscription plan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Registered User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{registered_user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{registered_user_id}}"
+              ]
+            },
+            "description": "Deletes the temporary registered user.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is expected', function () { pm.expect(pm.response.code).to.be.oneOf([200]); });",
+                  "let json = {};",
+                  "try { json = pm.response.json(); } catch (e) { json = {}; }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@stts.edu",
+      "type": "string"
+    },
+    {
+      "key": "user_email",
+      "value": "user@stts.edu",
+      "type": "string"
+    },
+    {
+      "key": "test_password",
+      "value": "wawa123",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "registered_user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "anime_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "created_anime_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "premium_anime_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscription_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "created_subscription_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "created_transaction_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "watchlist_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
