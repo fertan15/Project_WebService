@@ -83,6 +83,12 @@ const seedDatabase = async () => {
     // --- 3. SEED MASTER SUBSCRIPTION PLANS ---
     const plansData = [
       {
+        plan_name: "30 Seconds Trial",
+        price: 5000,
+        duration_days: 30 / 86400, // 30 seconds in days
+        description: "Trial premium 30 detik.",
+      },
+      {
         plan_name: "1 Month Premium Access",
         price: 50000,
         duration_days: 30,

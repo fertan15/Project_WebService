@@ -31,7 +31,7 @@ const createTransaction = async (req, res) => {
 
     // 3. Potong saldo wallet user & update subscription status
     const premiumUntil = new Date();
-    premiumUntil.setDate(premiumUntil.getDate() + plan.duration_days);
+    premiumUntil.setTime(premiumUntil.getTime() + plan.duration_days * 24 * 60 * 60 * 1000);
 
     await db.collection("users").findOneAndUpdate(
       { _id: new ObjectId(userId) },

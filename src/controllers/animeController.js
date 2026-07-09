@@ -127,10 +127,23 @@ const watchAnime = async (req, res) => {
     // Cek jika field menggunakan isPremium (baru) atau is_premium_only (seeder lama)
     const requiresPremium = anime.isPremium || anime.is_premium_only;
 
-    // 3. Logic check: Jika butuh premium tapi user bukan premium
-    if (requiresPremium && user.subscription_status !== "premium") {
+    // 3. Logic check: Jika butuh premium tapi user bukan premium atau sudah expired
+    let isUserPremium = user.subscription_status === "premium";
+
+    // Cek apakah premium sudah expired
+    if (isUserPremium && user.premium_until && new Date() > new Date(user.premium_until)) {
+      isUserPremium = false;
+      
+      // Update status user kembali ke basic di database
+      await db.collection("users").updateOne(
+        { _id: new ObjectId(userId) },
+        { $set: { subscription_status: "basic", premium_until: null } }
+      );
+    }
+
+    if (requiresPremium && !isUserPremium) {
       return res.status(403).json({
-        message: "This anime requires a premium subscription to watch.",
+        message: "This anime requires an active premium subscription to watch.",
       });
     }
 
