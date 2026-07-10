@@ -29,9 +29,7 @@ This README explains not only how to run the project, but also **what the web se
 - [19. Postman Collection Testing](#19-postman-collection-testing)
 - [20. Recommended Manual Testing Flow](#20-recommended-manual-testing-flow)
 - [21. Common Response Status Codes](#21-common-response-status-codes)
-- [22. Important Fixes in This Version](#22-important-fixes-in-this-version)
-- [23. Possible Future Improvements](#23-possible-future-improvements)
-- [24. Conclusion](#24-conclusion)
+- [22. Conclusion](#22-conclusion)
 
 ---
 
@@ -2621,51 +2619,7 @@ GET /api/transactions
 
 ---
 
-## 22. Important Fixes in This Version
-
-This version includes fixes and improvements:
-
-1. Fixed `proccess.env.MONGO_URI` to `process.env.MONGO_URI`.
-2. Added fallback port using `process.env.PORT || 3000`.
-3. Added required checks for `MONGO_URI` and `JWT_SECRET`.
-4. Added MongoDB ObjectId validation.
-5. Improved anime create/update validation.
-6. Improved type conversion for numbers and booleans from request bodies.
-7. Prevented user passwords from being returned in user endpoints.
-8. Added `GET /api/users/:id`.
-9. Added `GET /api/subscriptions/:id`.
-10. Added Review CRUD.
-11. Added Watchlist CRUD.
-12. Added cleanup logic when anime or users are deleted.
-13. Fixed transaction logic for wallet and pending payment methods.
-14. Added premium extension logic.
-15. Removed hardcoded MongoDB URI from seeder.
-16. Added `.env.example`.
-17. Updated Postman collection to test all endpoints.
-18. Expanded README with detailed endpoint and program flow explanations.
-
----
-
-## 23. Possible Future Improvements
-
-This project can be improved further with:
-
-1. Episode CRUD for individual anime episodes.
-2. Real video URL storage instead of fake watch URLs.
-3. Payment gateway integration.
-4. User profile endpoint for users to update their own profile.
-5. Refresh token system.
-6. Pagination for anime, reviews, watchlists, users, and transactions.
-7. Search/filter/sort for local anime database.
-8. Cloud image upload using Cloudinary or similar services.
-9. Soft delete for important records.
-10. Swagger/OpenAPI documentation.
-11. Unit and integration tests.
-12. Stronger production security for admin registration.
-
----
-
-## 24. Conclusion
+## 22. Conclusion
 
 Anime Subscription API is a backend web service for an anime streaming subscription platform. It demonstrates many important backend concepts:
 
